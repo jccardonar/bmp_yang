@@ -1,0 +1,260 @@
+module ietf-bmp {
+    yang-version 1.1;
+    namespace "urn:ietf:params:xml:ns:yang:ietf-bmp";
+
+    prefix ietf-bmp;
+
+    import ietf-inet-types {
+      prefix "inet";
+    }
+
+    import ietf-routing {
+       prefix rt;
+       reference
+         "RFC 8349, A YANG Data Model for Routing Management
+          (NMDA Version).";
+     }
+
+    import ietf-bgp-types {
+       prefix bt;
+       reference
+         "RFC XXXX, BGP YANG Model for Service Provider Network.";
+     }
+
+    import ietf-bgp {
+       prefix bgp;
+       reference
+         "RFC XXXX: BGP YANG module for Service Provider Network.";
+     }
+
+    organization "TBD";
+    contact "TBD";
+
+    description "BMP configuration";
+    revision 2022-01-27 { 
+      description 
+      "initial draft. Basic configuration for default arguments, and monitoring stations";
+    }
+
+    typedef bmp_peer_types {
+      type enumeration {
+        enum all_peers { value 10; }
+      }
+    }
+
+    grouping bmp_ip_connection {
+
+      leaf local-address {
+        type inet:ip-address;
+        description
+         "Local IP address to source connections";
+      }
+
+      leaf destination-port {
+        type inet:ip-address;
+        description
+         "Destination port for connections";
+      }
+
+    }
+
+    grouping bmp_peer_ribs_filter {
+      leaf enabled {
+           type boolean;
+           description "Enables the specified RIB";
+      }
+
+      container address-families {
+        list address-family {
+          key "name";
+
+          leaf name {
+            type leafref {
+             path "/rt:routing/rt:control-plane-protocols/rt:control-plane-protocol/bgp:bgp/bgp:global/bgp:afi-safis/bgp:afi-safi/bgp:name";
+            }
+            description "Name of the address family";
+          }
+
+          container peers {
+            list peer {
+              key "peer-identification";
+
+              leaf peer-identification{
+                type union {
+                  type leafref {
+                   path "/rt:routing/rt:control-plane-protocols/rt:control-plane-protocol/bgp:bgp/bgp:neighbors/bgp:neighbor/bgp:remote-address";
+                  }
+                  type bt:peer-type;
+                  type bmp_peer_types;
+                }
+              }
+
+            }
+          }
+
+          }
+
+        }
+
+
+
+
+    }
+
+    grouping bmp_route_monitoring_sources {
+
+      container adj-rib-in-pre {
+        uses bmp_peer_ribs_filter;
+      }
+
+      container adj-rib-in-post {
+        uses bmp_peer_ribs_filter;
+      }
+
+      container local-rib {
+        leaf enabled {
+             type boolean;
+             description "Enables the specified RIB";
+        }
+
+        leaf-list address-families {
+          type identityref {
+            base bt:afi-safi-type;
+          }
+          description "Default list of address families to enable for peers. If
+          not present, all will be enabled.";
+        }
+      }
+
+      container adj-rib-out-pre {
+        uses bmp_peer_ribs_filter;
+      }
+
+      container adj-rib-out-post {
+        uses bmp_peer_ribs_filter;
+      }
+
+    }
+
+    grouping bmp_session_options {
+      leaf initiation-message {
+        type string;
+        description "User defined message to append to the initiation message";
+      }
+
+      leaf statistics-interval {
+        type uint32;
+        description "Default Interval for statistic message.";
+      }
+
+    }
+
+
+    container bmp {
+
+      container stations {
+        description
+           "Configuration for BMP stations.";
+
+        list station {
+          key "id";
+
+          leaf id {
+            type string;
+            description "Identification string for the station";
+          }
+
+          // Connection, missing tcp tuning params like keep-alives, segment sizes, etc.
+          container connection {
+            uses bmp_ip_connection;
+          }
+
+          container bmp_session {
+            uses bmp_session_options;
+
+          }
+
+          container bmp_sources {
+            uses bmp_route_monitoring_sources;
+
+          }
+
+
+          container session-stats {
+            // stats and operational values
+            leaf established-session {
+             type boolean;
+             config false;
+             description "Value indicating if the session is currently established";
+            }
+
+            leaf total-route-monitoring-messages {
+             type uint32;
+             config false;
+             description "Number of route-monitoring messages sent since last sucessful connection";
+            }
+
+            leaf total-statistics-messages {
+             type uint32;
+             config false;
+             description "Number of statistics messages sent since last sucessful connection";
+            }
+
+            leaf total-peer-down-messages {
+             type uint32;
+             config false;
+             description "Number of peer-down messages sent since last sucessful connection";
+            }
+
+            leaf total-peer-up-messages {
+             type uint32;
+             config false;
+             description "Number of peer-up messages sent since last sucessful connection";
+            }
+
+            leaf total-initiation-messages {
+             type uint32;
+             config false;
+             description "Number of initiation messages sent since last sucessful connection";
+            }
+
+            leaf total-route-mirroring-messages {
+             type uint32;
+             config false;
+             description "Number of route-mirroring messages sent since last sucessful connection";
+            
+            }
+          }
+
+        }
+
+      }
+
+      container actions {
+
+      action reset-station {
+        input {
+          leaf station {
+            type leafref {
+              path "/bmp/stations/station/id";
+            }
+          }
+        }
+        output {
+          choice outcome {
+            leaf success {
+              type empty;
+              description "Reset succesful";
+            }
+           leaf failure {
+              type string;
+              description
+                "Reset could not be performed. Reason is included in the field";
+            }
+          }
+        }
+      }
+    }
+
+    }
+ }
