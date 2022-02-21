@@ -1,163 +1,231 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
-]>
-<?xml-stylesheet type="text/xsl" href="rfc2629.xslt" ?>
-<?rfc toc="yes"?>
-<?rfc tocompact="yes"?>
-<?rfc tocdepth="4"?>
-<?rfc tocindent="yes"?>
-<?rfc symrefs="yes"?>
-<?rfc sortrefs="yes"?>
-<?rfc comments="yes"?>
-<?rfc inline="yes"?>
-<?rfc compact="yes"?>
-<?rfc subcompact="no"?>
-<rfc category="std" ipr="trust200902" docName="draft-xxx-grow-bmp-yang-00">
-  <front>
-    <title abbrev="BMP YANG Module">BMP YANG Module</title>
-    <author fullname="Camilo Cardona" initials="C" surname="Cardona ">
-      <organization>NTT</organization>
-      <address>
-        <postal>
-          <street>164-168, Carrer de Numancia</street>
 
-          <city>Barcelona</city>
 
-          <code>08029</code>
 
-          <country>Spain</country>
-        </postal>
 
-        <email>camilo@ntt.net</email>
-      </address>
-    </author>
-    <author fullname="Paolo Lucente" initials="P." surname="Lucente">
-      <organization>NTT</organization>
-      <address>
-        <postal>
-          <street>Siriusdreef 70-72</street>
-          <city>Hoofddorp</city>
-          <region>WT</region>
-          <code>2132</code>
-          <country>Netherlands</country>
-        </postal>
-        <email>paolo@ntt.net</email>
-      </address>
-    </author>
-    <author fullname="Thomas Graf" initials="T." surname="Graf">
-      <organization>Swisscom</organization>
-      <address>
-        <postal>
-          <street>Binzring 17</street>
-          <city>Zurich 8045</city>
-          <country>Switzerland</country>
-        </postal>
-        <email>thomas.graf@swisscom.com</email>
-      </address>
-    </author>     
-    <author fullname="Benoit Claise" initials="B" surname="Claise">
-      <organization>Huawei</organization>
-      <address>
-        <email>benoit.claise@huawei.com</email>
-      </address>
-    </author> 
-    <date/>
-    <area>OPS</area>
-    <workgroup>GROW</workgroup>
-    <abstract>
-      <t> 
-        This document proposes a YANG module for BMP (BGP Monitoring Protocol) configuration and monitoring.
-        A complementary RPC triggers the retrieval of the BGP updates to the station.
-      </t>
-    </abstract>
-  </front>
+GROW                                                          C. Cardona
+Internet-Draft                                                P. Lucente
+Intended status: Standards Track                                     NTT
+Expires: August 25, 2022                                         T. Graf
+                                                                Swisscom
+                                                               B. Claise
+                                                                  Huawei
+                                                       February 21, 2022
 
-  <middle>
-    <section title="Terminology" anchor="terminology">
-       <t>
-         The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
-         NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
-         "MAY", and "OPTIONAL" in this document are to be interpreted as
-         described in BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/>
-         when, and only when, they appear in all capitals, as shown here.
-      </t>    
-      <t>
-         The term Client and Server are specified in <xref target="RFC8342"/>.
-       </t>       
-      <t>
-         The terms peers, stations, etc. come from ...
-       </t>   
-    </section>   
-    <section title="Introduction" anchor="introduction">
-       <t>
-        TO BE CHANGED. I KEPT A STRUCTURE FROM AN OLD DRAFT, WITH SOME EXAMPLES.
-       </t> 
-       <t>
-        This document specifies a way to learn from the devices how granular its telemetry and data can be to provide the best post-processing analytics. In the end, the service assurance architecture <xref target="I-D.claise-opsawg-service-assurance-architecture"/>, it's not sufficient to simply stream (or poll) telemetry data, it is equally important to be able to act on the data. As such, a series of extra information about the node capabilities is essential. 
-       </t> 
-       <t>
-        blabla
-       </t> 
-       <t>
-        The module ietf-notification-capabilities <xref target="I-D.ietf-netconf-notification-capabilities"/> augments ietf-system-capabilities to specify capabilities related to "Subscription to YANG Datastores" (YANG-Push) <xref target="RFC8639"/>. It provides a starting point by specifying some per-node telemetry-related capabilities. Of particular interest are the following node capabilities:
-        <list style="symbols">
-          <t>minimum-dampening-period</t>
-          <t>on-change-supported</t>
-          <t>periodic-notifications-supported</t>
-          <t>supported-excluded-change-type</t>
-        </list>
-       </t> 
-    </section>  
 
-    <section title="Concepts" anchor="concepts">
-       <t>
-        TO BE CHANGED. I KEPT A STRUCTURE FROM AN OLD DRAFT, WITH SOME EXAMPLES.
-       </t> 
-       <t>
-        Doing networking data collection for the sake of doing collection is not useful. At the time of network automation, displaying nice graphs from collected data is not useful: the collected data must be acted upon immediately. Some use cases are: network availability, closed loop automation (reconfiguring network based on observed network state changes), service assurance <xref target="I-D.claise-opsawg-service-assurance-architecture"/>, etc. 
-      </t>     
-      <t> 
-        Per-node static metadata includes:
-        <list style="symbols">
-          <t> 
-            minimum-observable-period: This is the minimum observable period in nanoseconds for the node-selector. Streaming or polling more frequently then this interval may not fetch useful information as the node could be updated only at this frequency internally. If a close loop automation system would stream or poll more frequently, it could actually draw the wrong conclusions. Let's take the example of interface counters than are updated more frequently than 30 seconds in a distributed system.
-            Streaming interface counters every 30 seconds would see an natural increase in the interface counters. However, streaming those interface counters every 10 seconds could lead to the wrong conclusion that no packets are received/sent on that specific interface ... triggering an automatic interface troubleshooting action.
-            Hence determining the minimum-observable-period for every monitored leaf is essential for closed loop automation and assurance systems.
-          </t>
-          <t> 
-            suggested-observable-period: The suggested observable period for this node-selector. This value represents factory default suggested information, only available at implementation time. Let us assume that an assurance system would like to monitor all FIB entries in the router. The router would advertise that the suggested observable period is, let's say, 30 seconds. Those 5 seconds are the factory defaults, provided at the implementation time. Once the router is in production, the observable period would obviously change depending on the environment (as an example, a FIB containing all BGP entries is huge): this dynamic suggest observable period is called the computed-observable-period and is available part of the get-measurement-metadata RPC.
-          </t>
-        </list>
-      </t>
-      <t> 
-        Per-node dynamic metadata includes, part of the get-measurement-metadata RPC:
-        <list style="symbols">
-          <t> 
-            optimized-measurement-point: The node-selector is searched up the data tree chain to find the parent node that is the optimized measurement point (if the optimized-measurement-point-feature is supported). If the node-selector itself is the optimized point then same data node is returned in the output. If the node-selector has no optimized measurement point then this optimized-measurement-point leaf is not returned.
-          </t>
-          <t> 
-            computed-observable-period: the computed observable period for this node-selector (and optimized-measurement-point). The system internally dynamically computes the suggested observable period (relevant for polling or streaming cadence) which can be greater-or-equal to the minimal-observable-period. Since this value is dynamic, this metadata is only available in a run time environment.
-          </t>
-          <t> 
-            active-measurements - subscribed-measurement-period: List of existing subscriptions for this node-selector. If there are no active subscriptions then system calculate the measurement-period and this list is not-returned, else, each instance in this list will be pair of active measurement with intended and actual period used by the system.
-          </t>
-        </list>
-      </t>     
-    </section>
+                            BMP YANG Module
+                       draft-xxx-grow-bmp-yang-00
 
-    <section title="Base ietf-bmp YANG module">
-      <section title="Tree View" anchor="ietf-bmp-tree-view">
-        <t>
-        The following tree diagram <xref target="RFC8340"/>
-        provides an overview of the ietf-system-node-metadata data model.
-        </t>
-        <t>
-          <figure>
-            <artwork><![CDATA[
+Abstract
+
+   This document proposes a YANG module for BMP (BGP Monitoring
+   Protocol) configuration and monitoring.  A complementary RPC triggers
+   the retrieval of the BGP updates to the station.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on August 25, 2022.
+
+Copyright Notice
+
+   Copyright (c) 2022 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (https://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 1]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+Table of Contents
+
+   1.  Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   2
+   2.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+   3.  Concepts  . . . . . . . . . . . . . . . . . . . . . . . . . .   3
+   4.  Base ietf-bmp YANG module . . . . . . . . . . . . . . . . . .   4
+     4.1.  Tree View . . . . . . . . . . . . . . . . . . . . . . . .   4
+     4.2.  YANG Module . . . . . . . . . . . . . . . . . . . . . . .   6
+   5.  Examples  . . . . . . . . . . . . . . . . . . . . . . . . . .  12
+   6.  Security Considerations . . . . . . . . . . . . . . . . . . .  18
+   7.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  19
+     7.1.  The IETF XML Registry . . . . . . . . . . . . . . . . . .  19
+   8.  Open Issues . . . . . . . . . . . . . . . . . . . . . . . . .  19
+   9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  19
+     9.1.  Normative References  . . . . . . . . . . . . . . . . . .  19
+     9.2.  Informative References  . . . . . . . . . . . . . . . . .  20
+   Acknowledgements  . . . . . . . . . . . . . . . . . . . . . . . .  21
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  21
+
+1.  Terminology
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in BCP
+   14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+   The term Client and Server are specified in [RFC8342].
+
+   The terms peers, stations, etc. come from ...
+
+2.  Introduction
+
+   TO BE CHANGED.  I KEPT A STRUCTURE FROM AN OLD DRAFT, WITH SOME
+   EXAMPLES.
+
+   This document specifies a way to learn from the devices how granular
+   its telemetry and data can be to provide the best post-processing
+   analytics.  In the end, the service assurance architecture
+   [I-D.claise-opsawg-service-assurance-architecture], it's not
+   sufficient to simply stream (or poll) telemetry data, it is equally
+   important to be able to act on the data.  As such, a series of extra
+   information about the node capabilities is essential.
+
+   blabla
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 2]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
+   The module ietf-notification-capabilities
+   [I-D.ietf-netconf-notification-capabilities] augments ietf-system-
+   capabilities to specify capabilities related to "Subscription to YANG
+   Datastores" (YANG-Push) [RFC8639].  It provides a starting point by
+   specifying some per-node telemetry-related capabilities.  Of
+   particular interest are the following node capabilities:
+
+   o  minimum-dampening-period
+
+   o  on-change-supported
+
+   o  periodic-notifications-supported
+
+   o  supported-excluded-change-type
+
+3.  Concepts
+
+   TO BE CHANGED.  I KEPT A STRUCTURE FROM AN OLD DRAFT, WITH SOME
+   EXAMPLES.
+
+   Doing networking data collection for the sake of doing collection is
+   not useful.  At the time of network automation, displaying nice
+   graphs from collected data is not useful: the collected data must be
+   acted upon immediately.  Some use cases are: network availability,
+   closed loop automation (reconfiguring network based on observed
+   network state changes), service assurance
+   [I-D.claise-opsawg-service-assurance-architecture], etc.
+
+   Per-node static metadata includes:
+
+   o  minimum-observable-period: This is the minimum observable period
+      in nanoseconds for the node-selector.  Streaming or polling more
+      frequently then this interval may not fetch useful information as
+      the node could be updated only at this frequency internally.  If a
+      close loop automation system would stream or poll more frequently,
+      it could actually draw the wrong conclusions.  Let's take the
+      example of interface counters than are updated more frequently
+      than 30 seconds in a distributed system.  Streaming interface
+      counters every 30 seconds would see an natural increase in the
+      interface counters.  However, streaming those interface counters
+      every 10 seconds could lead to the wrong conclusion that no
+      packets are received/sent on that specific interface ...
+      triggering an automatic interface troubleshooting action.  Hence
+      determining the minimum-observable-period for every monitored leaf
+      is essential for closed loop automation and assurance systems.
+
+   o  suggested-observable-period: The suggested observable period for
+      this node-selector.  This value represents factory default
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 3]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
+      suggested information, only available at implementation time.  Let
+      us assume that an assurance system would like to monitor all FIB
+      entries in the router.  The router would advertise that the
+      suggested observable period is, let's say, 30 seconds.  Those 5
+      seconds are the factory defaults, provided at the implementation
+      time.  Once the router is in production, the observable period
+      would obviously change depending on the environment (as an
+      example, a FIB containing all BGP entries is huge): this dynamic
+      suggest observable period is called the computed-observable-period
+      and is available part of the get-measurement-metadata RPC.
+
+   Per-node dynamic metadata includes, part of the get-measurement-
+   metadata RPC:
+
+   o  optimized-measurement-point: The node-selector is searched up the
+      data tree chain to find the parent node that is the optimized
+      measurement point (if the optimized-measurement-point-feature is
+      supported).  If the node-selector itself is the optimized point
+      then same data node is returned in the output.  If the node-
+      selector has no optimized measurement point then this optimized-
+      measurement-point leaf is not returned.
+
+   o  computed-observable-period: the computed observable period for
+      this node-selector (and optimized-measurement-point).  The system
+      internally dynamically computes the suggested observable period
+      (relevant for polling or streaming cadence) which can be greater-
+      or-equal to the minimal-observable-period.  Since this value is
+      dynamic, this metadata is only available in a run time
+      environment.
+
+   o  active-measurements - subscribed-measurement-period: List of
+      existing subscriptions for this node-selector.  If there are no
+      active subscriptions then system calculate the measurement-period
+      and this list is not-returned, else, each instance in this list
+      will be pair of active measurement with intended and actual period
+      used by the system.
+
+4.  Base ietf-bmp YANG module
+
+4.1.  Tree View
+
+   The following tree diagram [RFC8340] provides an overview of the
+   ietf-system-node-metadata data model.
+
 module: ietf-bmp
   +--rw bmp
      +--rw stations
      |  +--rw station* [id]
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 4]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
      |     +--rw id               string
      |     +--rw connection
      |     |  +--rw local-address?      inet:ip-address
@@ -206,6 +274,14 @@ module: ietf-bmp
      |        +--ro total-route-monitoring-messages?   uint32
      |        +--ro total-statistics-messages?         uint32
      |        +--ro total-peer-down-messages?          uint32
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 5]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
      |        +--ro total-peer-up-messages?            uint32
      |        +--ro total-initiation-messages?         uint32
      |        +--ro total-route-mirroring-messages?    uint32
@@ -220,15 +296,11 @@ module: ietf-bmp
                  +--:(failure)
                     +--ro failure?   string
 
-           ]]></artwork>
-          </figure>
-        </t> 
-      </section>    
 
-      <section title="YANG Module" anchor="ietf-bmp">
-        <t>&lt;CODE BEGINS> file "ietf-bmp@2022-01-27.yang"</t>
-          <figure>
-            <artwork><![CDATA[
+4.2.  YANG Module
+
+   <CODE BEGINS> file "ietf-bmp@2022-01-27.yang"
+
 module ietf-bmp {
     yang-version 1.1;
     namespace "urn:ietf:params:xml:ns:yang:ietf-bmp";
@@ -258,6 +330,14 @@ module ietf-bmp {
        prefix bgp;
        reference
          "RFC XXXX: BGP YANG module for Service Provider Network.";
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 6]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
      }
 
     organization "IETF GROW Working Group";
@@ -301,11 +381,19 @@ module ietf-bmp {
         (https://www.rfc-editor.org/info/rfc9196); see the RFC itself
         for full legal notices.";
 
-    revision 2022-01-27 { 
-      description 
+    revision 2022-01-27 {
+      description
       "initial version";
       reference
          "[RFC-to-be]: BMP YANG Module";
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 7]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
     }
 
     typedef bmp_peer_types {
@@ -354,6 +442,14 @@ module ietf-bmp {
                 type union {
                   type leafref {
                    path "/rt:routing/rt:control-plane-protocols/rt:control-plane-protocol/bgp:bgp/bgp:neighbors/bgp:neighbor/bgp:remote-address";
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 8]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
                   }
                   type bt:peer-type;
                   type bmp_peer_types;
@@ -402,6 +498,14 @@ module ietf-bmp {
     grouping bmp_session_options {
       leaf initiation-message {
         type string;
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 9]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
         description "User defined message to append to the initiation message";
       }
 
@@ -450,6 +554,14 @@ module ietf-bmp {
              description "Value indicating if the session is currently established";
             }
 
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 10]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
             leaf total-route-monitoring-messages {
              type uint32;
              config false;
@@ -484,7 +596,7 @@ module ietf-bmp {
              type uint32;
              config false;
              description "Number of route-mirroring messages sent since last sucessful connection";
-            
+
             }
           }
         }
@@ -498,6 +610,14 @@ module ietf-bmp {
             type leafref {
               path "/bmp/stations/station/id";
             }
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 11]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
           }
         }
         output {
@@ -518,66 +638,82 @@ module ietf-bmp {
   }
  }
 
-            ]]></artwork>
-          </figure>
-        <t>&lt;CODE ENDS></t>
-      </section> 
-    </section>  
-                    
-    <section title="Examples" anchor="examples">
-      <t> 
-         The YANG module specified in this document defines a schema for data 
-         that is designed to be accessed via network management protocols such 
-         as NETCONF <xref target="RFC6241"/> or RESTCONF <xref target="RFC8040"/>. The lowest NETCONF layer is the secure transport layer, and the mandatory-to-implement secure transport is Secure Shell (SSH) <xref target="RFC6242"/>. The lowest RESTCONF layer is HTTPS, and the mandatory-to-implement secure transport is TLS <xref target="RFC8446"/>.
-      </t>
-      <t>
-         XML data tree for the ietf-interface YANG module <xref target="RFC8343"/>:
-         <figure>
-            <artwork><![CDATA[
-  <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
-    <interface>
-      <name/>
-      <description/>
-      <type/>
-      <link-up-down-trap-enable/>
-      <admin-status/>
-      <oper-status/>
-      <last-change/>
-      <if-index/>
-      <phys-address/>
-      <higher-layer-if>
-        <!-- # entries: 0.. -->
-      </higher-layer-if>
-      <lower-layer-if>
-        <!-- # entries: 0.. -->
-      </lower-layer-if>
-      <speed/>
-      <statistics>
-        <discontinuity-time/>
-        <in-octets/>
-        <in-unicast-pkts/>
-        <in-broadcast-pkts/>
-        <in-multicast-pkts/>
-        <in-discards/>
-        <in-errors/>
-        <in-unknown-protos/>
-        <out-octets/>
-        <out-unicast-pkts/>
-        <out-broadcast-pkts/>
-        <out-multicast-pkts/>
-        <out-discards/>
-        <out-errors/>
-      </statistics>
-    </interface>
-  </interfaces>
-            ]]></artwork>
-        </figure>
-      </t>
 
-      <t>
-         Example1: Demonstrating the querying metadata for all system schema nodes for the ietf-interfaces [RFC8343].
-         <figure>
-            <artwork><![CDATA[
+   <CODE ENDS>
+
+5.  Examples
+
+   The YANG module specified in this document defines a schema for data
+   that is designed to be accessed via network management protocols such
+   as NETCONF [RFC6241] or RESTCONF [RFC8040].  The lowest NETCONF layer
+   is the secure transport layer, and the mandatory-to-implement secure
+   transport is Secure Shell (SSH) [RFC6242].  The lowest RESTCONF layer
+   is HTTPS, and the mandatory-to-implement secure transport is TLS
+   [RFC8446].
+
+   XML data tree for the ietf-interface YANG module [RFC8343]:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 12]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
+     <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+       <interface>
+         <name/>
+         <description/>
+         <type/>
+         <link-up-down-trap-enable/>
+         <admin-status/>
+         <oper-status/>
+         <last-change/>
+         <if-index/>
+         <phys-address/>
+         <higher-layer-if>
+           <!-- # entries: 0.. -->
+         </higher-layer-if>
+         <lower-layer-if>
+           <!-- # entries: 0.. -->
+         </lower-layer-if>
+         <speed/>
+         <statistics>
+           <discontinuity-time/>
+           <in-octets/>
+           <in-unicast-pkts/>
+           <in-broadcast-pkts/>
+           <in-multicast-pkts/>
+           <in-discards/>
+           <in-errors/>
+           <in-unknown-protos/>
+           <out-octets/>
+           <out-unicast-pkts/>
+           <out-broadcast-pkts/>
+           <out-multicast-pkts/>
+           <out-discards/>
+           <out-errors/>
+         </statistics>
+       </interface>
+     </interfaces>
+
+   Example1: Demonstrating the querying metadata for all system schema
+   nodes for the ietf-interfaces [RFC8343].
+
   <!-- Request -->
  <rpc xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" message-id="101">
   <get>
@@ -586,6 +722,14 @@ module ietf-bmp {
       </system-capabilities>
     </filter>
   </get>
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 13]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
 </rpc>
 
   <!-- Response -->
@@ -634,6 +778,14 @@ module ietf-bmp {
       <per-node-capabilities>
         <node-selector>/if:interfaces/if:interface/if:higher-layer-if</node-selector>
         <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.2.1.1</corresponding-mib-oid>
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 14]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
         <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
         <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
       </per-node-capabilities>
@@ -682,6 +834,14 @@ module ietf-bmp {
         <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
       </per-node-capabilities>
       <per-node-capabilities>
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 15]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
         <node-selector>/if:interfaces/if:interface/if:statistics/if:in-discards</node-selector>
         <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.13</corresponding-mib-oid>
         <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
@@ -730,6 +890,14 @@ module ietf-bmp {
         <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
       </per-node-capabilities>
       <per-node-capabilities>
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 16]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
         <node-selector>/if:interfaces/if:interface/if:statistics/if:out-errors</node-selector>
         <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.20</corresponding-mib-oid>
         <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
@@ -739,14 +907,53 @@ module ietf-bmp {
   </system-capabilities>
 </data>
 </rpc-reply>
-            ]]></artwork>
-        </figure>
-      </t>
 
-      <t>
-         Example2: Demonstrating the querying metadata of all optimized-measurement-point(s). Use containment and selection nodes filtering criteria to express which all metadata you want. In this example: get query filter only to "select" the node-instance-identifier, optimized-measurement-point nodes, for the ietf-interfaces [RFC8343]. There are two optimized-measurement-points: interface and statistics.
-         <figure>
-            <artwork><![CDATA[
+   Example2: Demonstrating the querying metadata of all optimized-
+   measurement-point(s).  Use containment and selection nodes filtering
+   criteria to express which all metadata you want.  In this example:
+   get query filter only to "select" the node-instance-identifier,
+   optimized-measurement-point nodes, for the ietf-interfaces [RFC8343].
+   There are two optimized-measurement-points: interface and statistics.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 17]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
    <!-- Request -->
  <rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
    <get>
@@ -781,98 +988,189 @@ module ietf-bmp {
   </system-capabilities>
 </data>
 </rpc-reply>
-            ]]></artwork>
-        </figure>
-      </t>
-    </section>
 
-    <section title="Security Considerations" anchor="security-considerations">
-      <t> 
-         The YANG module specified in this document defines a schema for data 
-         that is designed to be accessed via network management protocols such 
-         as NETCONF <xref target="RFC6241"/> or RESTCONF <xref target="RFC8040"/>. The lowest NETCONF layer is the secure transport layer, and the mandatory-to-implement secure transport is Secure Shell (SSH) <xref target="RFC6242"/>. The lowest RESTCONF layer is HTTPS, and the mandatory-to-implement secure transport is TLS <xref target="RFC8446"/>.
-      </t>
-      <t>
-         The Network Configuration Access Control Model (NACM) [RFC8341] 
-         provides the means to restrict access for particular NETCONF or 
-         RESTCONF users to a preconfigured subset of all available NETCONF or 
-         RESTCONF protocol operations and content.
-      </t>
-    </section>
+6.  Security Considerations
 
-    <section title="IANA Considerations" anchor="iana-considerations">
-      <section title="The IETF XML Registry">
-      	<t>
-      	   This document registers two URIs in the IETF XML 
-      	   registry <xref target="RFC3688"/>.  Following the format in 
-           <xref target="RFC3688"/>, the following registrations are
-           requested:</t>
-        <t>
-          <figure>
-          	<artwork>
-   URI: urn:ietf:params:xml:ns:yang:ietf-system-node-metadata
-   Registrant Contact: The NETCONF WG of the IETF.
-   XML: N/A, the requested URI is an XML namespace.
-             </artwork>
-           </figure>
-         </t>
-      </section>
-    </section>
+   The YANG module specified in this document defines a schema for data
+   that is designed to be accessed via network management protocols such
+   as NETCONF [RFC6241] or RESTCONF [RFC8040].  The lowest NETCONF layer
+   is the secure transport layer, and the mandatory-to-implement secure
+   transport is Secure Shell (SSH) [RFC6242].  The lowest RESTCONF layer
+   is HTTPS, and the mandatory-to-implement secure transport is TLS
+   [RFC8446].
 
-    <section title="Open Issues">
-      <t>
-        <list counter="a">
-          <t>Shall we copy the TCP tuning parameters from the BGP specifications?</t>
-        </list>
-      </t>
-    </section>
-  </middle>
+   The Network Configuration Access Control Model (NACM) [RFC8341]
+   provides the means to restrict access for particular NETCONF or
 
-  <back>
-    <references title="Normative References"> 
-      <?rfc include='reference.I-D.ietf-netconf-notification-capabilities'?>
-      <?rfc include='reference.I-D.ietf-netmod-rfc6991-bis'?>
-      <?rfc include='reference.RFC.2119'?>
-      <?rfc include='reference.RFC.7854'?>
-      <?rfc include='reference.RFC.8174'?>
-      <?rfc include='reference.RFC.8341'?>
-      <?rfc include='reference.RFC.8639'?>
-    </references>
-    <references title="Informative References">
-      <?rfc include='reference.I-D.claise-opsawg-service-assurance-architecture'?>
-      <?rfc include='reference.RFC.3688'?>
-      <?rfc include='reference.RFC.6241'?>
-      <?rfc include='reference.RFC.6242'?>
-      <?rfc include='reference.RFC.7223'?>
-      <?rfc include="reference.RFC.8040"?>
-      <?rfc include="reference.RFC.8340"?>
-      <?rfc include="reference.RFC.8342"?>
-      <?rfc include="reference.RFC.8343"?>
-      <?rfc include="reference.RFC.8446"?>
-    </references>
-    <?rfc needLines="100"?>
 
-<!--   
-    <section title="Changes between revisions">
-      </t>   
-      <t>v00 - v01
-        <list style="symbols">
-          <t>Placeholder: xxx</t>
-          <t>Placeholder: yyy</t>
-        </list>
-      </t>
-    </section>    
-  -->
 
-    <section title="Acknowledgements" numbered="no">
-        <t>
-          The authors would like to thank ... for their reviews and feedback.
-        </t>
-    </section>
 
-  </back>
-</rfc>
-<!-- Local Variables: -->
-<!-- fill-column:72 -->
-<!-- End: -->
+Cardona , et al.         Expires August 25, 2022               [Page 18]
+
+Internet-Draft               BMP YANG Module               February 2022
 
+
+   RESTCONF users to a preconfigured subset of all available NETCONF or
+   RESTCONF protocol operations and content.
+
+7.  IANA Considerations
+
+7.1.  The IETF XML Registry
+
+   This document registers two URIs in the IETF XML registry [RFC3688].
+   Following the format in [RFC3688], the following registrations are
+   requested:
+
+      URI: urn:ietf:params:xml:ns:yang:ietf-system-node-metadata
+      Registrant Contact: The NETCONF WG of the IETF.
+      XML: N/A, the requested URI is an XML namespace.
+
+8.  Open Issues
+
+      Shall we copy the TCP tuning parameters from the BGP
+      specifications?
+
+9.  References
+
+9.1.  Normative References
+
+   [I-D.ietf-netconf-notification-capabilities]
+              Lengyel, B., Clemm, A., and B. Claise, "YANG Modules
+              Describing Capabilities for Systems and Datastore Update
+              Notifications", draft-ietf-netconf-notification-
+              capabilities-21 (work in progress), October 2021.
+
+   [I-D.ietf-netmod-rfc6991-bis]
+              Schoenwaelder, J., "Common YANG Data Types", draft-ietf-
+              netmod-rfc6991-bis-11 (work in progress), February 2022.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC7854]  Scudder, J., Ed., Fernando, R., and S. Stuart, "BGP
+              Monitoring Protocol (BMP)", RFC 7854,
+              DOI 10.17487/RFC7854, June 2016,
+              <https://www.rfc-editor.org/info/rfc7854>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 19]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
+   [RFC8341]  Bierman, A. and M. Bjorklund, "Network Configuration
+              Access Control Model", STD 91, RFC 8341,
+              DOI 10.17487/RFC8341, March 2018,
+              <https://www.rfc-editor.org/info/rfc8341>.
+
+   [RFC8639]  Voit, E., Clemm, A., Gonzalez Prieto, A., Nilsen-Nygaard,
+              E., and A. Tripathy, "Subscription to YANG Notifications",
+              RFC 8639, DOI 10.17487/RFC8639, September 2019,
+              <https://www.rfc-editor.org/info/rfc8639>.
+
+9.2.  Informative References
+
+   [I-D.claise-opsawg-service-assurance-architecture]
+              Claise, B., Quilbeuf, J., Lopez, D. R., Voyer, D., and T.
+              Arumugam, "Service Assurance for Intent-based Networking
+              Architecture", draft-claise-opsawg-service-assurance-
+              architecture-05 (work in progress), April 2021.
+
+   [RFC3688]  Mealling, M., "The IETF XML Registry", BCP 81, RFC 3688,
+              DOI 10.17487/RFC3688, January 2004,
+              <https://www.rfc-editor.org/info/rfc3688>.
+
+   [RFC6241]  Enns, R., Ed., Bjorklund, M., Ed., Schoenwaelder, J., Ed.,
+              and A. Bierman, Ed., "Network Configuration Protocol
+              (NETCONF)", RFC 6241, DOI 10.17487/RFC6241, June 2011,
+              <https://www.rfc-editor.org/info/rfc6241>.
+
+   [RFC6242]  Wasserman, M., "Using the NETCONF Protocol over Secure
+              Shell (SSH)", RFC 6242, DOI 10.17487/RFC6242, June 2011,
+              <https://www.rfc-editor.org/info/rfc6242>.
+
+   [RFC7223]  Bjorklund, M., "A YANG Data Model for Interface
+              Management", RFC 7223, DOI 10.17487/RFC7223, May 2014,
+              <https://www.rfc-editor.org/info/rfc7223>.
+
+   [RFC8040]  Bierman, A., Bjorklund, M., and K. Watsen, "RESTCONF
+              Protocol", RFC 8040, DOI 10.17487/RFC8040, January 2017,
+              <https://www.rfc-editor.org/info/rfc8040>.
+
+   [RFC8340]  Bjorklund, M. and L. Berger, Ed., "YANG Tree Diagrams",
+              BCP 215, RFC 8340, DOI 10.17487/RFC8340, March 2018,
+              <https://www.rfc-editor.org/info/rfc8340>.
+
+   [RFC8342]  Bjorklund, M., Schoenwaelder, J., Shafer, P., Watsen, K.,
+              and R. Wilton, "Network Management Datastore Architecture
+              (NMDA)", RFC 8342, DOI 10.17487/RFC8342, March 2018,
+              <https://www.rfc-editor.org/info/rfc8342>.
+
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 20]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
+   [RFC8343]  Bjorklund, M., "A YANG Data Model for Interface
+              Management", RFC 8343, DOI 10.17487/RFC8343, March 2018,
+              <https://www.rfc-editor.org/info/rfc8343>.
+
+   [RFC8446]  Rescorla, E., "The Transport Layer Security (TLS) Protocol
+              Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018,
+              <https://www.rfc-editor.org/info/rfc8446>.
+
+Acknowledgements
+
+   The authors would like to thank ... for their reviews and feedback.
+
+Authors' Addresses
+
+   Camilo Cardona
+   NTT
+   164-168, Carrer de Numancia
+   Barcelona  08029
+   Spain
+
+   Email: camilo@ntt.net
+
+
+   Paolo Lucente
+   NTT
+   Siriusdreef 70-72
+   Hoofddorp, WT  2132
+   Netherlands
+
+   Email: paolo@ntt.net
+
+
+   Thomas Graf
+   Swisscom
+   Binzring 17
+   Zurich 8045
+   Switzerland
+
+   Email: thomas.graf@swisscom.com
+
+
+   Benoit Claise
+   Huawei
+
+   Email: benoit.claise@huawei.com
+
+
+
+
+
+
+Cardona , et al.         Expires August 25, 2022               [Page 21]
