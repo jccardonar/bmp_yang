@@ -239,17 +239,13 @@ Internet-Draft               BMP YANG Module               February 2022
      |     |  |  +--rw address-families
      |     |  |     +--rw address-family* [name]
      |     |  |        +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
-     |     |  |        +--rw peers
-     |     |  |           +--rw peer* [peer-identification]
-     |     |  |              +--rw peer-identification    union
+     |     |  |        +--rw peers*   union
      |     |  +--rw adj-rib-in-post
      |     |  |  +--rw enabled?            boolean
      |     |  |  +--rw address-families
      |     |  |     +--rw address-family* [name]
      |     |  |        +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
-     |     |  |        +--rw peers
-     |     |  |           +--rw peer* [peer-identification]
-     |     |  |              +--rw peer-identification    union
+     |     |  |        +--rw peers*   union
      |     |  +--rw local-rib
      |     |  |  +--rw enabled?            boolean
      |     |  |  +--rw address-families*   identityref
@@ -258,30 +254,18 @@ Internet-Draft               BMP YANG Module               February 2022
      |     |  |  +--rw address-families
      |     |  |     +--rw address-family* [name]
      |     |  |        +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
-     |     |  |        +--rw peers
-     |     |  |           +--rw peer* [peer-identification]
-     |     |  |              +--rw peer-identification    union
+     |     |  |        +--rw peers*   union
      |     |  +--rw adj-rib-out-post
      |     |     +--rw enabled?            boolean
      |     |     +--rw address-families
      |     |        +--rw address-family* [name]
      |     |           +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
-     |     |           +--rw peers
-     |     |              +--rw peer* [peer-identification]
-     |     |                 +--rw peer-identification    union
+     |     |           +--rw peers*   union
      |     +--rw session-stats
      |        +--ro established-session?               boolean
      |        +--ro total-route-monitoring-messages?   uint32
      |        +--ro total-statistics-messages?         uint32
      |        +--ro total-peer-down-messages?          uint32
-
-
-
-Cardona , et al.         Expires August 25, 2022                [Page 5]
-
-Internet-Draft               BMP YANG Module               February 2022
-
-
      |        +--ro total-peer-up-messages?            uint32
      |        +--ro total-initiation-messages?         uint32
      |        +--ro total-route-mirroring-messages?    uint32
@@ -290,12 +274,19 @@ Internet-Draft               BMP YANG Module               February 2022
            +---w input
            |  +---w station?   -> /bmp/stations/station/id
            +--ro output
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 5]
+
+Internet-Draft               BMP YANG Module               February 2022
+
+
               +--ro (outcome)?
                  +--:(success)
                  |  +--ro success?   empty
                  +--:(failure)
                     +--ro failure?   string
-
 
 4.2.  YANG Module
 
@@ -330,14 +321,6 @@ module ietf-bmp {
        prefix bgp;
        reference
          "RFC XXXX: BGP YANG module for Service Provider Network.";
-
-
-
-Cardona , et al.         Expires August 25, 2022                [Page 6]
-
-Internet-Draft               BMP YANG Module               February 2022
-
-
      }
 
     organization "IETF GROW Working Group";
@@ -347,6 +330,13 @@ Internet-Draft               BMP YANG Module               February 2022
 
         Author:  Camilo Cardona
            <mailto:camilo@ntt.net>
+
+
+
+Cardona , et al.         Expires August 25, 2022                [Page 6]
+
+Internet-Draft               BMP YANG Module               February 2022
+
 
         Author:  Paolo Lucente
            <mailto:cpaolo@ntt.net>
@@ -386,6 +376,16 @@ Internet-Draft               BMP YANG Module               February 2022
       "initial version";
       reference
          "[RFC-to-be]: BMP YANG Module";
+    }
+
+    typedef bmp_peer_types {
+      type enumeration {
+        enum all_peers {
+          value 10;
+          description "Selects all peers";
+          }
+      }
+      description
 
 
 
@@ -394,15 +394,11 @@ Cardona , et al.         Expires August 25, 2022                [Page 7]
 Internet-Draft               BMP YANG Module               February 2022
 
 
-    }
-
-    typedef bmp_peer_types {
-      type enumeration {
-        enum all_peers { value 10; }
-      }
+      "Enum values for peer selection specific for BMP";
     }
 
     grouping bmp_ip_connection {
+      description "common elements for defining connectivity to a bmp station";
 
       leaf local-address {
         type inet:ip-address;
@@ -418,14 +414,18 @@ Internet-Draft               BMP YANG Module               February 2022
     }
 
     grouping bmp_peer_ribs_filter {
+      description "Leaves for configuring RIBs where origin/destination peers are well defined.";
+
       leaf enabled {
            type boolean;
            description "Enables the specified RIB";
       }
 
       container address-families {
+        description "container for lists of address-families";
         list address-family {
           key "name";
+          description "List of address families. The name of the address family, as defined in the BGP model is used for keying.";
 
           leaf name {
             type leafref {
@@ -434,14 +434,14 @@ Internet-Draft               BMP YANG Module               February 2022
             description "Name of the address family";
           }
 
-          container peers {
-            list peer {
-              key "peer-identification";
-
-              leaf peer-identification{
-                type union {
-                  type leafref {
-                   path "/rt:routing/rt:control-plane-protocols/rt:control-plane-protocol/bgp:bgp/bgp:neighbors/bgp:neighbor/bgp:remote-address";
+          leaf-list peers {
+            type union {
+              type leafref {
+               path "/rt:routing/rt:control-plane-protocols/rt:control-plane-protocol/bgp:bgp/bgp:neighbors/bgp:neighbor/bgp:remote-address";
+              }
+              type bt:peer-type;
+              type bmp_peer_types;
+            }
 
 
 
@@ -450,12 +450,7 @@ Cardona , et al.         Expires August 25, 2022                [Page 8]
 Internet-Draft               BMP YANG Module               February 2022
 
 
-                  }
-                  type bt:peer-type;
-                  type bmp_peer_types;
-                }
-              }
-            }
+            description "Peers can be identified by a remote-address, or by a enum value corresponding to groups of peers. This way an operator can select all external peers, all internal peers, or all peers.";
           }
         }
       }
@@ -463,15 +458,20 @@ Internet-Draft               BMP YANG Module               February 2022
 
     grouping bmp_route_monitoring_sources {
 
+      description "";
+
       container adj-rib-in-pre {
+        description 'Configuration for the adj-rib-in pre-policy';
         uses bmp_peer_ribs_filter;
       }
 
       container adj-rib-in-post {
+        description 'Configuration for the adj-rib-in post-policy';
         uses bmp_peer_ribs_filter;
       }
 
       container local-rib {
+        description 'Configuration for the local-rib';
         leaf enabled {
              type boolean;
              description "Enables the specified RIB";
@@ -487,17 +487,17 @@ Internet-Draft               BMP YANG Module               February 2022
       }
 
       container adj-rib-out-pre {
+        description 'Configuration for the adj-rib-out pre-policy';
         uses bmp_peer_ribs_filter;
       }
 
       container adj-rib-out-post {
+        description 'Configuration for the adj-rib-out post-policy';
         uses bmp_peer_ribs_filter;
       }
     }
 
     grouping bmp_session_options {
-      leaf initiation-message {
-        type string;
 
 
 
@@ -506,6 +506,9 @@ Cardona , et al.         Expires August 25, 2022                [Page 9]
 Internet-Draft               BMP YANG Module               February 2022
 
 
+      description 'leaves for configuration of the bmp session';
+      leaf initiation-message {
+        type string;
         description "User defined message to append to the initiation message";
       }
 
@@ -517,13 +520,15 @@ Internet-Draft               BMP YANG Module               February 2022
 
 
     container bmp {
+      description 'Main level for BMP configuration ';
 
       container stations {
-        description
-           "Configuration for BMP stations.";
+        description 'Container for the list of BMP stations';
 
         list station {
           key "id";
+          description
+           "Configuration for BMP stations.";
 
           leaf id {
             type string;
@@ -532,28 +537,23 @@ Internet-Draft               BMP YANG Module               February 2022
 
           // Connection, missing tcp tuning params like keep-alives, segment sizes, etc.
           container connection {
+            description 'Connection details for the station';
             uses bmp_ip_connection;
           }
 
           container bmp_session {
+            description 'BMP session options for the station';
             uses bmp_session_options;
-
           }
 
           container bmp_sources {
+            description 'Configuration of the data sources for the station';
             uses bmp_route_monitoring_sources;
-
           }
 
 
           container session-stats {
-            // stats and operational values
-            leaf established-session {
-             type boolean;
-             config false;
-             description "Value indicating if the session is currently established";
-            }
-
+            description 'stats and operational values for the station';
 
 
 
@@ -561,6 +561,12 @@ Cardona , et al.         Expires August 25, 2022               [Page 10]
 
 Internet-Draft               BMP YANG Module               February 2022
 
+
+            leaf established-session {
+             type boolean;
+             config false;
+             description "Value indicating if the session is currently established";
+            }
 
             leaf total-route-monitoring-messages {
              type uint32;
@@ -603,13 +609,7 @@ Internet-Draft               BMP YANG Module               February 2022
       }
 
       container actions {
-
-      action reset-station {
-        input {
-          leaf station {
-            type leafref {
-              path "/bmp/stations/station/id";
-            }
+        description 'Contqiner with the actions for the BMP operation';
 
 
 
@@ -618,26 +618,34 @@ Cardona , et al.         Expires August 25, 2022               [Page 11]
 Internet-Draft               BMP YANG Module               February 2022
 
 
-          }
-        }
-        output {
-          choice outcome {
-            leaf success {
-              type empty;
-              description "Reset succesful";
-            }
-           leaf failure {
-              type string;
-              description
-                "Reset could not be performed. Reason is included in the field";
+        action reset-station {
+          description 'Allows the reset of a session for a particular station.';
+          input {
+            leaf station {
+              type leafref {
+                path "/bmp/stations/station/id";
+              }
+              description 'Identifies the station to reset';
             }
           }
+          output {
+            choice outcome {
+              description 'Output of the reset operation. Either a success or failure. For the latter, the reason for the error is provided.';
+              leaf success {
+                type empty;
+                description "Reset succesful";
+              }
+             leaf failure {
+                type string;
+                description
+                  "Reset could not be performed. Reason is included in the field";
+              }
+            }
+          }
         }
-      }
     }
   }
  }
-
 
    <CODE ENDS>
 
@@ -652,14 +660,6 @@ Internet-Draft               BMP YANG Module               February 2022
    [RFC8446].
 
    XML data tree for the ietf-interface YANG module [RFC8343]:
-
-
-
-
-
-
-
-
 
 
 
