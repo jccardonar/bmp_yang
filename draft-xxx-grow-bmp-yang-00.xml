@@ -171,17 +171,13 @@ module: ietf-bmp
      |     |  |  +--rw address-families
      |     |  |     +--rw address-family* [name]
      |     |  |        +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
-     |     |  |        +--rw peers
-     |     |  |           +--rw peer* [peer-identification]
-     |     |  |              +--rw peer-identification    union
+     |     |  |        +--rw peers*   union
      |     |  +--rw adj-rib-in-post
      |     |  |  +--rw enabled?            boolean
      |     |  |  +--rw address-families
      |     |  |     +--rw address-family* [name]
      |     |  |        +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
-     |     |  |        +--rw peers
-     |     |  |           +--rw peer* [peer-identification]
-     |     |  |              +--rw peer-identification    union
+     |     |  |        +--rw peers*   union
      |     |  +--rw local-rib
      |     |  |  +--rw enabled?            boolean
      |     |  |  +--rw address-families*   identityref
@@ -190,17 +186,13 @@ module: ietf-bmp
      |     |  |  +--rw address-families
      |     |  |     +--rw address-family* [name]
      |     |  |        +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
-     |     |  |        +--rw peers
-     |     |  |           +--rw peer* [peer-identification]
-     |     |  |              +--rw peer-identification    union
+     |     |  |        +--rw peers*   union
      |     |  +--rw adj-rib-out-post
      |     |     +--rw enabled?            boolean
      |     |     +--rw address-families
      |     |        +--rw address-family* [name]
      |     |           +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
-     |     |           +--rw peers
-     |     |              +--rw peer* [peer-identification]
-     |     |                 +--rw peer-identification    union
+     |     |           +--rw peers*   union
      |     +--rw session-stats
      |        +--ro established-session?               boolean
      |        +--ro total-route-monitoring-messages?   uint32
@@ -219,7 +211,6 @@ module: ietf-bmp
                  |  +--ro success?   empty
                  +--:(failure)
                     +--ro failure?   string
-
            ]]></artwork>
           </figure>
         </t> 
@@ -301,8 +292,8 @@ module ietf-bmp {
         (https://www.rfc-editor.org/info/rfc9196); see the RFC itself
         for full legal notices.";
 
-    revision 2022-01-27 { 
-      description 
+    revision 2022-01-27 {
+      description
       "initial version";
       reference
          "[RFC-to-be]: BMP YANG Module";
@@ -310,11 +301,17 @@ module ietf-bmp {
 
     typedef bmp_peer_types {
       type enumeration {
-        enum all_peers { value 10; }
+        enum all_peers {
+          value 10;
+          description "Selects all peers";
+          }
       }
+      description
+      "Enum values for peer selection specific for BMP";
     }
 
     grouping bmp_ip_connection {
+      description "common elements for defining connectivity to a bmp station";
 
       leaf local-address {
         type inet:ip-address;
@@ -330,14 +327,18 @@ module ietf-bmp {
     }
 
     grouping bmp_peer_ribs_filter {
+      description "Leaves for configuring RIBs where origin/destination peers are well defined.";
+
       leaf enabled {
            type boolean;
            description "Enables the specified RIB";
       }
 
       container address-families {
+        description "container for lists of address-families";
         list address-family {
           key "name";
+          description "List of address families. The name of the address family, as defined in the BGP model is used for keying.";
 
           leaf name {
             type leafref {
@@ -346,20 +347,15 @@ module ietf-bmp {
             description "Name of the address family";
           }
 
-          container peers {
-            list peer {
-              key "peer-identification";
-
-              leaf peer-identification{
-                type union {
-                  type leafref {
-                   path "/rt:routing/rt:control-plane-protocols/rt:control-plane-protocol/bgp:bgp/bgp:neighbors/bgp:neighbor/bgp:remote-address";
-                  }
-                  type bt:peer-type;
-                  type bmp_peer_types;
-                }
+          leaf-list peers {
+            type union {
+              type leafref {
+               path "/rt:routing/rt:control-plane-protocols/rt:control-plane-protocol/bgp:bgp/bgp:neighbors/bgp:neighbor/bgp:remote-address";
               }
+              type bt:peer-type;
+              type bmp_peer_types;
             }
+            description "Peers can be identified by a remote-address, or by a enum value corresponding to groups of peers. This way an operator can select all external peers, all internal peers, or all peers.";
           }
         }
       }
@@ -367,15 +363,20 @@ module ietf-bmp {
 
     grouping bmp_route_monitoring_sources {
 
+      description "";
+
       container adj-rib-in-pre {
+        description 'Configuration for the adj-rib-in pre-policy';
         uses bmp_peer_ribs_filter;
       }
 
       container adj-rib-in-post {
+        description 'Configuration for the adj-rib-in post-policy';
         uses bmp_peer_ribs_filter;
       }
 
       container local-rib {
+        description 'Configuration for the local-rib';
         leaf enabled {
              type boolean;
              description "Enables the specified RIB";
@@ -391,15 +392,18 @@ module ietf-bmp {
       }
 
       container adj-rib-out-pre {
+        description 'Configuration for the adj-rib-out pre-policy';
         uses bmp_peer_ribs_filter;
       }
 
       container adj-rib-out-post {
+        description 'Configuration for the adj-rib-out post-policy';
         uses bmp_peer_ribs_filter;
       }
     }
 
     grouping bmp_session_options {
+      description 'leaves for configuration of the bmp session';
       leaf initiation-message {
         type string;
         description "User defined message to append to the initiation message";
@@ -413,13 +417,15 @@ module ietf-bmp {
 
 
     container bmp {
+      description 'Main level for BMP configuration ';
 
       container stations {
-        description
-           "Configuration for BMP stations.";
+        description 'Container for the list of BMP stations';
 
         list station {
           key "id";
+          description
+           "Configuration for BMP stations.";
 
           leaf id {
             type string;
@@ -428,22 +434,24 @@ module ietf-bmp {
 
           // Connection, missing tcp tuning params like keep-alives, segment sizes, etc.
           container connection {
+            description 'Connection details for the station';
             uses bmp_ip_connection;
           }
 
           container bmp_session {
+            description 'BMP session options for the station';
             uses bmp_session_options;
-
           }
 
           container bmp_sources {
+            description 'Configuration of the data sources for the station';
             uses bmp_route_monitoring_sources;
-
           }
 
 
           container session-stats {
-            // stats and operational values
+            description 'stats and operational values for the station';
+
             leaf established-session {
              type boolean;
              config false;
@@ -484,40 +492,42 @@ module ietf-bmp {
              type uint32;
              config false;
              description "Number of route-mirroring messages sent since last sucessful connection";
-            
+
             }
           }
         }
       }
 
       container actions {
-
-      action reset-station {
-        input {
-          leaf station {
-            type leafref {
-              path "/bmp/stations/station/id";
+        description 'Contqiner with the actions for the BMP operation';
+        action reset-station {
+          description 'Allows the reset of a session for a particular station.';
+          input {
+            leaf station {
+              type leafref {
+                path "/bmp/stations/station/id";
+              }
+              description 'Identifies the station to reset';
+            }
+          }
+          output {
+            choice outcome {
+              description 'Output of the reset operation. Either a success or failure. For the latter, the reason for the error is provided.';
+              leaf success {
+                type empty;
+                description "Reset succesful";
+              }
+             leaf failure {
+                type string;
+                description
+                  "Reset could not be performed. Reason is included in the field";
+              }
             }
           }
         }
-        output {
-          choice outcome {
-            leaf success {
-              type empty;
-              description "Reset succesful";
-            }
-           leaf failure {
-              type string;
-              description
-                "Reset could not be performed. Reason is included in the field";
-            }
-          }
-        }
-      }
     }
   }
  }
-
             ]]></artwork>
           </figure>
         <t>&lt;CODE ENDS></t>
