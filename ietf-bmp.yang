@@ -278,8 +278,8 @@ module ietf-bmp {
 
       container actions {
         description 'Container with the actions for the BMP operation';
-        action reset-station {
-          description 'Allows the reset of a session for a particular station.';
+        action session-reset {
+          description 'Resets the session for a station.';
           input {
             leaf station {
               type leafref {
