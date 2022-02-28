@@ -67,7 +67,7 @@
     <abstract>
       <t> 
         This document proposes a YANG module for BMP (BGP Monitoring Protocol) configuration and monitoring.
-        A complementary RPC triggers the retrieval of the BGP updates to the station.
+        A complementary RPC triggers a refresh of the session of a BMP station.
       </t>
     </abstract>
   </front>
@@ -81,65 +81,47 @@
          described in BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/>
          when, and only when, they appear in all capitals, as shown here.
       </t>    
-      <t>
-         The term Client and Server are specified in <xref target="RFC8342"/>.
-       </t>       
-      <t>
-         The terms peers, stations, etc. come from ...
-       </t>   
+       <t>
+           Routing Information Bases, peers, monitoring stations are defined in  <xref target="RFC7854"/>.
+      </t>    
     </section>   
     <section title="Introduction" anchor="introduction">
        <t>
-        TO BE CHANGED. I KEPT A STRUCTURE FROM AN OLD DRAFT, WITH SOME EXAMPLES.
-       </t> 
-       <t>
-        This document specifies a way to learn from the devices how granular its telemetry and data can be to provide the best post-processing analytics. In the end, the service assurance architecture <xref target="I-D.claise-opsawg-service-assurance-architecture"/>, it's not sufficient to simply stream (or poll) telemetry data, it is equally important to be able to act on the data. As such, a series of extra information about the node capabilities is essential. 
-       </t> 
-       <t>
-        blabla
-       </t> 
-       <t>
-        The module ietf-notification-capabilities <xref target="I-D.ietf-netconf-notification-capabilities"/> augments ietf-system-capabilities to specify capabilities related to "Subscription to YANG Datastores" (YANG-Push) <xref target="RFC8639"/>. It provides a starting point by specifying some per-node telemetry-related capabilities. Of particular interest are the following node capabilities:
-        <list style="symbols">
-          <t>minimum-dampening-period</t>
-          <t>on-change-supported</t>
-          <t>periodic-notifications-supported</t>
-          <t>supported-excluded-change-type</t>
-        </list>
+           This document specifies a YANG module for configuring and monitoring
+           the BGP Monitoring Protocol (BMP) <xref target="RFC7854"/>. The
+           model provides parameters for defining BMP stations, tuning their
+           session attributes, and monitoring their operational metrics. The
+           model also includes different parameters for selecting the data
+           to send to each BMP station as precise as possible.
        </t> 
     </section>  
 
     <section title="Concepts" anchor="concepts">
        <t>
-        TO BE CHANGED. I KEPT A STRUCTURE FROM AN OLD DRAFT, WITH SOME EXAMPLES.
-       </t> 
-       <t>
-        Doing networking data collection for the sake of doing collection is not useful. At the time of network automation, displaying nice graphs from collected data is not useful: the collected data must be acted upon immediately. Some use cases are: network availability, closed loop automation (reconfiguring network based on observed network state changes), service assurance <xref target="I-D.claise-opsawg-service-assurance-architecture"/>, etc. 
+           The BMP YANG model provides the methods for managing BMP  monitoring stations. It includes:
       </t>     
       <t> 
-        Per-node static metadata includes:
         <list style="symbols">
           <t> 
-            minimum-observable-period: This is the minimum observable period in nanoseconds for the node-selector. Streaming or polling more frequently then this interval may not fetch useful information as the node could be updated only at this frequency internally. If a close loop automation system would stream or poll more frequently, it could actually draw the wrong conclusions. Let's take the example of interface counters than are updated more frequently than 30 seconds in a distributed system.
-            Streaming interface counters every 30 seconds would see an natural increase in the interface counters. However, streaming those interface counters every 10 seconds could lead to the wrong conclusion that no packets are received/sent on that specific interface ... triggering an automatic interface troubleshooting action.
-            Hence determining the minimum-observable-period for every monitored leaf is essential for closed loop automation and assurance systems.
+              Connectivity parameters, including station IP address and destination port.
           </t>
           <t> 
-            suggested-observable-period: The suggested observable period for this node-selector. This value represents factory default suggested information, only available at implementation time. Let us assume that an assurance system would like to monitor all FIB entries in the router. The router would advertise that the suggested observable period is, let's say, 30 seconds. Those 5 seconds are the factory defaults, provided at the implementation time. Once the router is in production, the observable period would obviously change depending on the environment (as an example, a FIB containing all BGP entries is huge): this dynamic suggest observable period is called the computed-observable-period and is available part of the get-measurement-metadata RPC.
-          </t>
-        </list>
-      </t>
-      <t> 
-        Per-node dynamic metadata includes, part of the get-measurement-metadata RPC:
-        <list style="symbols">
-          <t> 
-            optimized-measurement-point: The node-selector is searched up the data tree chain to find the parent node that is the optimized measurement point (if the optimized-measurement-point-feature is supported). If the node-selector itself is the optimized point then same data node is returned in the output. If the node-selector has no optimized measurement point then this optimized-measurement-point leaf is not returned.
+              BMP session parameters, such as defining the BMP initiation message
+              or the interval for statistics messages.
           </t>
           <t> 
-            computed-observable-period: the computed observable period for this node-selector (and optimized-measurement-point). The system internally dynamically computes the suggested observable period (relevant for polling or streaming cadence) which can be greater-or-equal to the minimal-observable-period. Since this value is dynamic, this metadata is only available in a run time environment.
+              BGP Data sources. The model requires the explicit configuration
+              of the RIBs and address family to send to each monitoring
+              station. For Adj-RIB-in and Adj-RIB-out,both post and pre policy,
+              the the model also requires the peers from which to originate
+              data. In those RIBs, the value "all_peers" can be used if the
+              operators desires to receive data of all peers. 
           </t>
           <t> 
-            active-measurements - subscribed-measurement-period: List of existing subscriptions for this node-selector. If there are no active subscriptions then system calculate the measurement-period and this list is not-returned, else, each instance in this list will be pair of active measurement with intended and actual period used by the system.
+              BMP station session statistics. 
+          </t>
+          <t> 
+              Session reset action.
           </t>
         </list>
       </t>     
@@ -148,8 +130,8 @@
     <section title="Base ietf-bmp YANG module">
       <section title="Tree View" anchor="ietf-bmp-tree-view">
         <t>
-        The following tree diagram <xref target="RFC8340"/>
-        provides an overview of the ietf-system-node-metadata data model.
+        The following tree diagram provides an overview of the ietf-bmp.yang
+            data model.
         </t>
         <t>
           <figure>
@@ -160,8 +142,9 @@ module: ietf-bmp
      |  +--rw station* [id]
      |     +--rw id               string
      |     +--rw connection
-     |     |  +--rw local-address?      inet:ip-address
-     |     |  +--rw destination-port?   inet:ip-address
+     |     |  +--rw destination-address    inet:ip-address
+     |     |  +--rw local-address?         inet:ip-address
+     |     |  +--rw destination-port?      inet:ip-address
      |     +--rw bmp_session
      |     |  +--rw initiation-message?    string
      |     |  +--rw statistics-interval?   uint32
@@ -170,13 +153,13 @@ module: ietf-bmp
      |     |  |  +--rw enabled?            boolean
      |     |  |  +--rw address-families
      |     |  |     +--rw address-family* [name]
-     |     |  |        +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
+     |     |  |        +--rw name     leafref
      |     |  |        +--rw peers*   union
      |     |  +--rw adj-rib-in-post
      |     |  |  +--rw enabled?            boolean
      |     |  |  +--rw address-families
      |     |  |     +--rw address-family* [name]
-     |     |  |        +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
+     |     |  |        +--rw name     leafref
      |     |  |        +--rw peers*   union
      |     |  +--rw local-rib
      |     |  |  +--rw enabled?            boolean
@@ -185,13 +168,13 @@ module: ietf-bmp
      |     |  |  +--rw enabled?            boolean
      |     |  |  +--rw address-families
      |     |  |     +--rw address-family* [name]
-     |     |  |        +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
+     |     |  |        +--rw name     leafref
      |     |  |        +--rw peers*   union
      |     |  +--rw adj-rib-out-post
      |     |     +--rw enabled?            boolean
      |     |     +--rw address-families
      |     |        +--rw address-family* [name]
-     |     |           +--rw name     -> /rt:routing/control-plane-protocols/control-plane-protocol/bgp:bgp/global/afi-safis/afi-safi/name
+     |     |           +--rw name     leafref
      |     |           +--rw peers*   union
      |     +--rw session-stats
      |        +--ro established-session?               boolean
@@ -202,7 +185,7 @@ module: ietf-bmp
      |        +--ro total-initiation-messages?         uint32
      |        +--ro total-route-mirroring-messages?    uint32
      +--rw actions
-        +---x reset-station
+        +---x session-reset
            +---w input
            |  +---w station?   -> /bmp/stations/station/id
            +--ro output
@@ -220,6 +203,8 @@ module: ietf-bmp
         <t>&lt;CODE BEGINS> file "ietf-bmp@2022-01-27.yang"</t>
           <figure>
             <artwork><![CDATA[
+=============== NOTE: '\\' line wrapping per RFC 8792 ===============
+
 module ietf-bmp {
     yang-version 1.1;
     namespace "urn:ietf:params:xml:ns:yang:ietf-bmp";
@@ -268,7 +253,8 @@ module ietf-bmp {
         Author:  Benoit Claise
            <mailto:benoit.claise@huawei.com>";
 
-    description "This module specifies a structure for BMP (BGP Monitoring
+    description "This module specifies a structure for BMP (BGP Moni\
+\toring
         Protocol) configuration and monitoring.
 
         The key words 'MUST', 'MUST NOT', 'REQUIRED', 'SHALL',
@@ -282,7 +268,8 @@ module ietf-bmp {
         authors of the code.  All rights reserved.
 
         Redistribution and use in source and binary forms, with or
-        without modification, is permitted pursuant to, and subject to
+        without modification, is permitted pursuant to, and subject \
+\to
         the license terms contained in, the Revised BSD License set
         forth in Section 4.c of the IETF Trust's Legal Provisions
         Relating to IETF Documents
@@ -292,8 +279,8 @@ module ietf-bmp {
         (https://www.rfc-editor.org/info/rfc9196); see the RFC itself
         for full legal notices.";
 
-    revision 2022-01-27 {
-      description
+    revision 2022-01-27 { 
+      description 
       "initial version";
       reference
          "[RFC-to-be]: BMP YANG Module";
@@ -301,8 +288,8 @@ module ietf-bmp {
 
     typedef bmp_peer_types {
       type enumeration {
-        enum all_peers {
-          value 10;
+        enum all_peers { 
+          value 10; 
           description "Selects all peers";
           }
       }
@@ -311,7 +298,15 @@ module ietf-bmp {
     }
 
     grouping bmp_ip_connection {
-      description "common elements for defining connectivity to a bmp station";
+      description "common elements for defining connectivity to a bm\
+\p station";
+
+      leaf destination-address {
+        type inet:ip-address;
+        mandatory true;
+        description
+         "Destination IP address of station";
+      }
 
       leaf local-address {
         type inet:ip-address;
@@ -327,7 +322,8 @@ module ietf-bmp {
     }
 
     grouping bmp_peer_ribs_filter {
-      description "Leaves for configuring RIBs where origin/destination peers are well defined.";
+      description "Leaves for configuring RIBs where origin/destinat\
+\ion peers are well defined.";
 
       leaf enabled {
            type boolean;
@@ -338,11 +334,14 @@ module ietf-bmp {
         description "container for lists of address-families";
         list address-family {
           key "name";
-          description "List of address families. The name of the address family, as defined in the BGP model is used for keying.";
+          description "List of address families. The name of the add\
+\ress family, as defined in the BGP model is used for keying.";
 
           leaf name {
             type leafref {
-             path "/rt:routing/rt:control-plane-protocols/rt:control-plane-protocol/bgp:bgp/bgp:global/bgp:afi-safis/bgp:afi-safi/bgp:name";
+             path "/rt:routing/rt:control-plane-protocols/rt:control\
+\-plane-protocol/bgp:bgp/bgp:global/bgp:afi-safis/bgp:afi-safi/bgp:n\
+\ame";
             }
             description "Name of the address family";
           }
@@ -350,12 +349,17 @@ module ietf-bmp {
           leaf-list peers {
             type union {
               type leafref {
-               path "/rt:routing/rt:control-plane-protocols/rt:control-plane-protocol/bgp:bgp/bgp:neighbors/bgp:neighbor/bgp:remote-address";
+               path "/rt:routing/rt:control-plane-protocols/rt:contr\
+\ol-plane-protocol/bgp:bgp/bgp:neighbors/bgp:neighbor/bgp:remote-add\
+\ress";
               }
               type bt:peer-type;
               type bmp_peer_types;
             }
-            description "Peers can be identified by a remote-address, or by a enum value corresponding to groups of peers. This way an operator can select all external peers, all internal peers, or all peers.";
+            description "Peers can be identified by a remote-address\
+\, or by a enum value corresponding to groups of peers. This way an \
+\operator can select all external peers, all internal peers, or all \
+\peers.";
           }
         }
       }
@@ -386,8 +390,8 @@ module ietf-bmp {
           type identityref {
             base bt:afi-safi-type;
           }
-          description "Default list of address families to enable for peers. If
-          not present, all will be enabled.";
+          description "List of address families to enable for local-\
+\rib.";
         }
       }
 
@@ -406,7 +410,8 @@ module ietf-bmp {
       description 'leaves for configuration of the bmp session';
       leaf initiation-message {
         type string;
-        description "User defined message to append to the initiation message";
+        description "User defined message to append to the initiatio\
+\n message";
       }
 
       leaf statistics-interval {
@@ -432,7 +437,8 @@ module ietf-bmp {
             description "Identification string for the station";
           }
 
-          // Connection, missing tcp tuning params like keep-alives, segment sizes, etc.
+          // Connection, missing tcp tuning params like keep-alives,\
+\ segment sizes, etc.
           container connection {
             description 'Connection details for the station';
             uses bmp_ip_connection;
@@ -444,64 +450,74 @@ module ietf-bmp {
           }
 
           container bmp_sources {
-            description 'Configuration of the data sources for the station';
+            description 'Configuration of the data sources for the s\
+\tation';
             uses bmp_route_monitoring_sources;
           }
 
 
           container session-stats {
-            description 'stats and operational values for the station';
+            description 'stats and operational values for the statio\
+\n';
 
             leaf established-session {
              type boolean;
              config false;
-             description "Value indicating if the session is currently established";
+             description "Value indicating if the session is current\
+\ly established";
             }
 
             leaf total-route-monitoring-messages {
              type uint32;
              config false;
-             description "Number of route-monitoring messages sent since last sucessful connection";
+             description "Number of route-monitoring messages sent s\
+\ince last successful connection";
             }
 
             leaf total-statistics-messages {
              type uint32;
              config false;
-             description "Number of statistics messages sent since last sucessful connection";
+             description "Number of statistics messages sent since l\
+\ast successful connection";
             }
 
             leaf total-peer-down-messages {
              type uint32;
              config false;
-             description "Number of peer-down messages sent since last sucessful connection";
+             description "Number of peer-down messages sent since la\
+\st successful connection";
             }
 
             leaf total-peer-up-messages {
              type uint32;
              config false;
-             description "Number of peer-up messages sent since last sucessful connection";
+             description "Number of peer-up messages sent since last\
+\ successful connection";
             }
 
             leaf total-initiation-messages {
              type uint32;
              config false;
-             description "Number of initiation messages sent since last sucessful connection";
+             description "Number of initiation messages sent since l\
+\ast successful connection";
             }
 
             leaf total-route-mirroring-messages {
              type uint32;
              config false;
-             description "Number of route-mirroring messages sent since last sucessful connection";
-
+             description "Number of route-mirroring messages sent si\
+\nce last successful connection";
+            
             }
           }
         }
       }
 
       container actions {
-        description 'Contqiner with the actions for the BMP operation';
-        action reset-station {
-          description 'Allows the reset of a session for a particular station.';
+        description 'Container with the actions for the BMP operatio\
+\n';
+        action session-reset {
+          description 'Resets the session for a station.';
           input {
             leaf station {
               type leafref {
@@ -512,15 +528,18 @@ module ietf-bmp {
           }
           output {
             choice outcome {
-              description 'Output of the reset operation. Either a success or failure. For the latter, the reason for the error is provided.';
+              description 'Output of the reset operation. Either a s\
+\uccess or failure. For the latter, the reason for the error is prov\
+\ided.';
               leaf success {
                 type empty;
-                description "Reset succesful";
+                description "Reset successful";
               }
              leaf failure {
                 type string;
                 description
-                  "Reset could not be performed. Reason is included in the field";
+                  "Reset could not be performed. Reason is included \
+\in the field";
               }
             }
           }
@@ -534,268 +553,6 @@ module ietf-bmp {
       </section> 
     </section>  
                     
-    <section title="Examples" anchor="examples">
-      <t> 
-         The YANG module specified in this document defines a schema for data 
-         that is designed to be accessed via network management protocols such 
-         as NETCONF <xref target="RFC6241"/> or RESTCONF <xref target="RFC8040"/>. The lowest NETCONF layer is the secure transport layer, and the mandatory-to-implement secure transport is Secure Shell (SSH) <xref target="RFC6242"/>. The lowest RESTCONF layer is HTTPS, and the mandatory-to-implement secure transport is TLS <xref target="RFC8446"/>.
-      </t>
-      <t>
-         XML data tree for the ietf-interface YANG module <xref target="RFC8343"/>:
-         <figure>
-            <artwork><![CDATA[
-  <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
-    <interface>
-      <name/>
-      <description/>
-      <type/>
-      <link-up-down-trap-enable/>
-      <admin-status/>
-      <oper-status/>
-      <last-change/>
-      <if-index/>
-      <phys-address/>
-      <higher-layer-if>
-        <!-- # entries: 0.. -->
-      </higher-layer-if>
-      <lower-layer-if>
-        <!-- # entries: 0.. -->
-      </lower-layer-if>
-      <speed/>
-      <statistics>
-        <discontinuity-time/>
-        <in-octets/>
-        <in-unicast-pkts/>
-        <in-broadcast-pkts/>
-        <in-multicast-pkts/>
-        <in-discards/>
-        <in-errors/>
-        <in-unknown-protos/>
-        <out-octets/>
-        <out-unicast-pkts/>
-        <out-broadcast-pkts/>
-        <out-multicast-pkts/>
-        <out-discards/>
-        <out-errors/>
-      </statistics>
-    </interface>
-  </interfaces>
-            ]]></artwork>
-        </figure>
-      </t>
-
-      <t>
-         Example1: Demonstrating the querying metadata for all system schema nodes for the ietf-interfaces [RFC8343].
-         <figure>
-            <artwork><![CDATA[
-  <!-- Request -->
- <rpc xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" message-id="101">
-  <get>
-    <filter>
-      <system-capabilities xmlns="urn:ietf:params:xml:ns:yang:ietf-system-capabilities">
-      </system-capabilities>
-    </filter>
-  </get>
-</rpc>
-
-  <!-- Response -->
-<rpc-reply message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-  <data>
-  <system-capabilities xmlns="urn:ietf:params:xml:ns:yang:ietf-system-capabilities" xmlns:ds="urn:ietf:params:xml:ns:yang:ietf-datastores">
-    <datastore-capabilities>
-      <datastore>ds:operational</datastore>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"></corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:admin-status</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.7</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:oper-status</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.8</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:if-index</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.1</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:phys-address</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.6</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:lower-layer-if</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.2.1.2</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:higher-layer-if</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.2.1.1</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:speed</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.5</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:discontinuity-time</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.19</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-octets</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.10</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-unicast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.11</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-multicast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.2</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-broadcast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.3</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-discards</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.13</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-errors</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.14</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-unknown-protos</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.15</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-octets</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.16</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-unicast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.17</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-multicast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.4</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-broadcast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.5</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-discards</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.19</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-errors</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.20</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-    </datastore-capabilities>
-  </system-capabilities>
-</data>
-</rpc-reply>
-            ]]></artwork>
-        </figure>
-      </t>
-
-      <t>
-         Example2: Demonstrating the querying metadata of all optimized-measurement-point(s). Use containment and selection nodes filtering criteria to express which all metadata you want. In this example: get query filter only to "select" the node-instance-identifier, optimized-measurement-point nodes, for the ietf-interfaces [RFC8343]. There are two optimized-measurement-points: interface and statistics.
-         <figure>
-            <artwork><![CDATA[
-   <!-- Request -->
- <rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-   <get>
-     <filter type="subtree">
-     <system-capabilities xmlns="urn:ietf:params:xml:ns:yang:ietf-system-capabilities"></system-capabilities>
-      <datastore-capabilities>
-        <datastore>ds:operational</datastore>
-        <per-node-capabilities>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-        </per-node-capabilities>
-      </datastore-capabilities>
-    </filter>
-   </get>
- </rpc>
-
-  <!-- Response -->
-
-<rpc-reply message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-  <data>
-  <system-capabilities xmlns="urn:ietf:params:xml:ns:yang:ietf-system-capabilities" xmlns:ds="urn:ietf:params:xml:ns:yang:ietf-datastores">
-    <datastore-capabilities>
-      <datastore>ds:operational</datastore>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-      </per-node-capabilities>
-    </datastore-capabilities>
-  </system-capabilities>
-</data>
-</rpc-reply>
-            ]]></artwork>
-        </figure>
-      </t>
-    </section>
-
     <section title="Security Considerations" anchor="security-considerations">
       <t> 
          The YANG module specified in this document defines a schema for data 
@@ -803,10 +560,14 @@ module ietf-bmp {
          as NETCONF <xref target="RFC6241"/> or RESTCONF <xref target="RFC8040"/>. The lowest NETCONF layer is the secure transport layer, and the mandatory-to-implement secure transport is Secure Shell (SSH) <xref target="RFC6242"/>. The lowest RESTCONF layer is HTTPS, and the mandatory-to-implement secure transport is TLS <xref target="RFC8446"/>.
       </t>
       <t>
-         The Network Configuration Access Control Model (NACM) [RFC8341] 
-         provides the means to restrict access for particular NETCONF or 
-         RESTCONF users to a preconfigured subset of all available NETCONF or 
-         RESTCONF protocol operations and content.
+         BGP data is sensible for security considerations. The model described
+          in this document could be used to send BGP information to malicious
+          BMP stations. Write access to this model should therefore be
+          properly protected. 
+      </t>
+      <t>
+          The session-reset action can demand considerable amount of resources
+          from network elements. It should be protected from illegal access.
       </t>
     </section>
 
@@ -820,7 +581,7 @@ module ietf-bmp {
         <t>
           <figure>
           	<artwork>
-   URI: urn:ietf:params:xml:ns:yang:ietf-system-node-metadata
+   URI: urn:ietf:params:xml:ns:yang:ietf-bmp
    Registrant Contact: The NETCONF WG of the IETF.
    XML: N/A, the requested URI is an XML namespace.
              </artwork>
@@ -832,7 +593,7 @@ module ietf-bmp {
     <section title="Open Issues">
       <t>
         <list counter="a">
-          <t>Shall we copy the TCP tuning parameters from the BGP specifications?</t>
+          <t>Shall we copy the TCP tuning and security parameters from the BGP specifications?</t>
         </list>
       </t>
     </section>
@@ -840,26 +601,19 @@ module ietf-bmp {
 
   <back>
     <references title="Normative References"> 
-      <?rfc include='reference.I-D.ietf-netconf-notification-capabilities'?>
-      <?rfc include='reference.I-D.ietf-netmod-rfc6991-bis'?>
-      <?rfc include='reference.RFC.2119'?>
-      <?rfc include='reference.RFC.7854'?>
-      <?rfc include='reference.RFC.8174'?>
-      <?rfc include='reference.RFC.8341'?>
-      <?rfc include='reference.RFC.8639'?>
-    </references>
-    <references title="Informative References">
-      <?rfc include='reference.I-D.claise-opsawg-service-assurance-architecture'?>
-      <?rfc include='reference.RFC.3688'?>
-      <?rfc include='reference.RFC.6241'?>
-      <?rfc include='reference.RFC.6242'?>
-      <?rfc include='reference.RFC.7223'?>
+      <?rfc include="reference.RFC.7854"?>
+      <?rfc include="reference.RFC.6241"?>
       <?rfc include="reference.RFC.8040"?>
-      <?rfc include="reference.RFC.8340"?>
-      <?rfc include="reference.RFC.8342"?>
-      <?rfc include="reference.RFC.8343"?>
+      <?rfc include="reference.RFC.6242"?>
       <?rfc include="reference.RFC.8446"?>
+      <?rfc include="reference.RFC.2119"?>
+      <?rfc include="reference.RFC.8174"?>
+      <?rfc include="reference.RFC.3688"?>
     </references>
+<!--
+    <references title="Informative References">
+    </references>
+        -->
     <?rfc needLines="100"?>
 
 <!--   
