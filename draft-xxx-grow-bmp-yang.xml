@@ -81,6 +81,9 @@
          described in BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/>
          when, and only when, they appear in all capitals, as shown here.
       </t>    
+       <t>
+           Routing Information Bases, peers, monitoring stations are defined in  <xref target="RFC7854"/>.
+      </t>    
     </section>   
     <section title="Introduction" anchor="introduction">
        <t>
@@ -95,21 +98,30 @@
 
     <section title="Concepts" anchor="concepts">
        <t>
-           The BMP YANG model provides the methods for managing all monitoring stations. It includes:
+           The BMP YANG model provides the methods for managing BMP  monitoring stations. It includes:
       </t>     
       <t> 
         <list style="symbols">
           <t> 
-              Connectivity and session parameters for the station.
+              Connectivity parameters, including station IP address and destination port.
           </t>
           <t> 
-              RIB sources.  
+              BMP session parameters, such as defining the BMP initiation message
+              or the interval for statistics messages.
           </t>
           <t> 
-              Session statistics. 
+              BGP Data sources. The model requires the explicit configuration
+              of the RIBs and address family to send to each monitoring
+              station. For Adj-RIB-in and Adj-RIB-out,both post and pre policy,
+              the the model also requires the peers from which to originate
+              data. In those RIBs, the value "all_peers" can be used if the
+              operators desires to receive data of all peers. 
           </t>
           <t> 
-              Refresh session action.
+              BMP station session statistics. 
+          </t>
+          <t> 
+              Session reset action.
           </t>
         </list>
       </t>     
@@ -118,8 +130,8 @@
     <section title="Base ietf-bmp YANG module">
       <section title="Tree View" anchor="ietf-bmp-tree-view">
         <t>
-        The following tree diagram <xref target="RFC8340"/>
-        provides an overview of the ietf-bmp.yang data model.
+        The following tree diagram provides an overview of the ietf-bmp.yang
+            data model.
         </t>
         <t>
           <figure>
@@ -189,26 +201,19 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
 
   <back>
     <references title="Normative References"> 
-      <?rfc include='reference.I-D.ietf-netconf-notification-capabilities'?>
-      <?rfc include='reference.I-D.ietf-netmod-rfc6991-bis'?>
-      <?rfc include='reference.RFC.2119'?>
-      <?rfc include='reference.RFC.7854'?>
-      <?rfc include='reference.RFC.8174'?>
-      <?rfc include='reference.RFC.8341'?>
-      <?rfc include='reference.RFC.8639'?>
-    </references>
-    <references title="Informative References">
-      <?rfc include='reference.I-D.claise-opsawg-service-assurance-architecture'?>
-      <?rfc include='reference.RFC.3688'?>
-      <?rfc include='reference.RFC.6241'?>
-      <?rfc include='reference.RFC.6242'?>
-      <?rfc include='reference.RFC.7223'?>
+      <?rfc include="reference.RFC.7854"?>
+      <?rfc include="reference.RFC.6241"?>
       <?rfc include="reference.RFC.8040"?>
-      <?rfc include="reference.RFC.8340"?>
-      <?rfc include="reference.RFC.8342"?>
-      <?rfc include="reference.RFC.8343"?>
+      <?rfc include="reference.RFC.6242"?>
       <?rfc include="reference.RFC.8446"?>
+      <?rfc include="reference.RFC.2119"?>
+      <?rfc include="reference.RFC.8174"?>
+      <?rfc include="reference.RFC.3688"?>
     </references>
+<!--
+    <references title="Informative References">
+    </references>
+        -->
     <?rfc needLines="100"?>
 
 <!--   

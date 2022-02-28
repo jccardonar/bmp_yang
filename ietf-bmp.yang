@@ -93,9 +93,9 @@ module ietf-bmp {
 
       leaf destination-address {
         type inet:ip-address;
+        mandatory true;
         description
          "Destination IP address of station";
-        mandatory true;
       }
 
       leaf local-address {
@@ -171,8 +171,7 @@ module ietf-bmp {
           type identityref {
             base bt:afi-safi-type;
           }
-          description "Default list of address families to enable for peers. If
-          not present, all will be enabled.";
+          description "List of address families to enable for local-rib.";
         }
       }
 

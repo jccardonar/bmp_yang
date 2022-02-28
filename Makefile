@@ -68,9 +68,11 @@ $(next).xml: $(draft).xml ietf-bmp.yang
 	$(oxtradoc) -m outline-to-xml -n "$@" $< > $@
 
 %.txt: %.xml
-	$(xml2rfc) --v3 $< -o $@ --text
+	#$(xml2rfc) --v3 $< -o $@ --text
+	$(xml2rfc)  $< -o $@ --text
 
 %.html: %.xml
-	$(xml2rfc) --v3 $< -o $@ --html
+	#$(xml2rfc) --v3 $< -o $@ --html
+	$(xml2rfc)  $< -o $@ --html
 
 
