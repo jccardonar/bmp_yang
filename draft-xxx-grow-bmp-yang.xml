@@ -67,7 +67,7 @@
     <abstract>
       <t> 
         This document proposes a YANG module for BMP (BGP Monitoring Protocol) configuration and monitoring.
-        A complementary RPC triggers the retrieval of the BGP updates to the station.
+        A complementary RPC triggers a refresh of the session of a BMP station.
       </t>
     </abstract>
   </front>
@@ -81,65 +81,35 @@
          described in BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/>
          when, and only when, they appear in all capitals, as shown here.
       </t>    
-      <t>
-         The term Client and Server are specified in <xref target="RFC8342"/>.
-       </t>       
-      <t>
-         The terms peers, stations, etc. come from ...
-       </t>   
     </section>   
     <section title="Introduction" anchor="introduction">
        <t>
-        TO BE CHANGED. I KEPT A STRUCTURE FROM AN OLD DRAFT, WITH SOME EXAMPLES.
-       </t> 
-       <t>
-        This document specifies a way to learn from the devices how granular its telemetry and data can be to provide the best post-processing analytics. In the end, the service assurance architecture <xref target="I-D.claise-opsawg-service-assurance-architecture"/>, it's not sufficient to simply stream (or poll) telemetry data, it is equally important to be able to act on the data. As such, a series of extra information about the node capabilities is essential. 
-       </t> 
-       <t>
-        blabla
-       </t> 
-       <t>
-        The module ietf-notification-capabilities <xref target="I-D.ietf-netconf-notification-capabilities"/> augments ietf-system-capabilities to specify capabilities related to "Subscription to YANG Datastores" (YANG-Push) <xref target="RFC8639"/>. It provides a starting point by specifying some per-node telemetry-related capabilities. Of particular interest are the following node capabilities:
-        <list style="symbols">
-          <t>minimum-dampening-period</t>
-          <t>on-change-supported</t>
-          <t>periodic-notifications-supported</t>
-          <t>supported-excluded-change-type</t>
-        </list>
+           This document specifies a YANG module for configuring and monitoring
+           the BGP Monitoring Protocol (BMP) <xref target="RFC7854"/>. The
+           model provides parameters for defining BMP stations, tuning their
+           session attributes, and monitoring their operational metrics. The
+           model also includes different parameters for selecting the data
+           to send to each BMP station as precise as possible.
        </t> 
     </section>  
 
     <section title="Concepts" anchor="concepts">
        <t>
-        TO BE CHANGED. I KEPT A STRUCTURE FROM AN OLD DRAFT, WITH SOME EXAMPLES.
-       </t> 
-       <t>
-        Doing networking data collection for the sake of doing collection is not useful. At the time of network automation, displaying nice graphs from collected data is not useful: the collected data must be acted upon immediately. Some use cases are: network availability, closed loop automation (reconfiguring network based on observed network state changes), service assurance <xref target="I-D.claise-opsawg-service-assurance-architecture"/>, etc. 
+           The BMP YANG model provides the methods for managing all monitoring stations. It includes:
       </t>     
       <t> 
-        Per-node static metadata includes:
         <list style="symbols">
           <t> 
-            minimum-observable-period: This is the minimum observable period in nanoseconds for the node-selector. Streaming or polling more frequently then this interval may not fetch useful information as the node could be updated only at this frequency internally. If a close loop automation system would stream or poll more frequently, it could actually draw the wrong conclusions. Let's take the example of interface counters than are updated more frequently than 30 seconds in a distributed system.
-            Streaming interface counters every 30 seconds would see an natural increase in the interface counters. However, streaming those interface counters every 10 seconds could lead to the wrong conclusion that no packets are received/sent on that specific interface ... triggering an automatic interface troubleshooting action.
-            Hence determining the minimum-observable-period for every monitored leaf is essential for closed loop automation and assurance systems.
+              Connectivity and session parameters for the station.
           </t>
           <t> 
-            suggested-observable-period: The suggested observable period for this node-selector. This value represents factory default suggested information, only available at implementation time. Let us assume that an assurance system would like to monitor all FIB entries in the router. The router would advertise that the suggested observable period is, let's say, 30 seconds. Those 5 seconds are the factory defaults, provided at the implementation time. Once the router is in production, the observable period would obviously change depending on the environment (as an example, a FIB containing all BGP entries is huge): this dynamic suggest observable period is called the computed-observable-period and is available part of the get-measurement-metadata RPC.
-          </t>
-        </list>
-      </t>
-      <t> 
-        Per-node dynamic metadata includes, part of the get-measurement-metadata RPC:
-        <list style="symbols">
-          <t> 
-            optimized-measurement-point: The node-selector is searched up the data tree chain to find the parent node that is the optimized measurement point (if the optimized-measurement-point-feature is supported). If the node-selector itself is the optimized point then same data node is returned in the output. If the node-selector has no optimized measurement point then this optimized-measurement-point leaf is not returned.
+              RIB sources.  
           </t>
           <t> 
-            computed-observable-period: the computed observable period for this node-selector (and optimized-measurement-point). The system internally dynamically computes the suggested observable period (relevant for polling or streaming cadence) which can be greater-or-equal to the minimal-observable-period. Since this value is dynamic, this metadata is only available in a run time environment.
+              Session statistics. 
           </t>
           <t> 
-            active-measurements - subscribed-measurement-period: List of existing subscriptions for this node-selector. If there are no active subscriptions then system calculate the measurement-period and this list is not-returned, else, each instance in this list will be pair of active measurement with intended and actual period used by the system.
+              Refresh session action.
           </t>
         </list>
       </t>     
@@ -149,7 +119,7 @@
       <section title="Tree View" anchor="ietf-bmp-tree-view">
         <t>
         The following tree diagram <xref target="RFC8340"/>
-        provides an overview of the ietf-system-node-metadata data model.
+        provides an overview of the ietf-bmp.yang data model.
         </t>
         <t>
           <figure>
@@ -171,268 +141,6 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
       </section> 
     </section>  
                     
-    <section title="Examples" anchor="examples">
-      <t> 
-         The YANG module specified in this document defines a schema for data 
-         that is designed to be accessed via network management protocols such 
-         as NETCONF <xref target="RFC6241"/> or RESTCONF <xref target="RFC8040"/>. The lowest NETCONF layer is the secure transport layer, and the mandatory-to-implement secure transport is Secure Shell (SSH) <xref target="RFC6242"/>. The lowest RESTCONF layer is HTTPS, and the mandatory-to-implement secure transport is TLS <xref target="RFC8446"/>.
-      </t>
-      <t>
-         XML data tree for the ietf-interface YANG module <xref target="RFC8343"/>:
-         <figure>
-            <artwork><![CDATA[
-  <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
-    <interface>
-      <name/>
-      <description/>
-      <type/>
-      <link-up-down-trap-enable/>
-      <admin-status/>
-      <oper-status/>
-      <last-change/>
-      <if-index/>
-      <phys-address/>
-      <higher-layer-if>
-        <!-- # entries: 0.. -->
-      </higher-layer-if>
-      <lower-layer-if>
-        <!-- # entries: 0.. -->
-      </lower-layer-if>
-      <speed/>
-      <statistics>
-        <discontinuity-time/>
-        <in-octets/>
-        <in-unicast-pkts/>
-        <in-broadcast-pkts/>
-        <in-multicast-pkts/>
-        <in-discards/>
-        <in-errors/>
-        <in-unknown-protos/>
-        <out-octets/>
-        <out-unicast-pkts/>
-        <out-broadcast-pkts/>
-        <out-multicast-pkts/>
-        <out-discards/>
-        <out-errors/>
-      </statistics>
-    </interface>
-  </interfaces>
-            ]]></artwork>
-        </figure>
-      </t>
-
-      <t>
-         Example1: Demonstrating the querying metadata for all system schema nodes for the ietf-interfaces [RFC8343].
-         <figure>
-            <artwork><![CDATA[
-  <!-- Request -->
- <rpc xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" message-id="101">
-  <get>
-    <filter>
-      <system-capabilities xmlns="urn:ietf:params:xml:ns:yang:ietf-system-capabilities">
-      </system-capabilities>
-    </filter>
-  </get>
-</rpc>
-
-  <!-- Response -->
-<rpc-reply message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-  <data>
-  <system-capabilities xmlns="urn:ietf:params:xml:ns:yang:ietf-system-capabilities" xmlns:ds="urn:ietf:params:xml:ns:yang:ietf-datastores">
-    <datastore-capabilities>
-      <datastore>ds:operational</datastore>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"></corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:admin-status</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.7</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:oper-status</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.8</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:if-index</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.1</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:phys-address</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.6</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:lower-layer-if</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.2.1.2</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:higher-layer-if</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.2.1.1</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:speed</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.5</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:discontinuity-time</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.19</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-octets</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.10</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-unicast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.11</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-multicast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.2</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-broadcast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.3</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-discards</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.13</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-errors</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.14</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:in-unknown-protos</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.15</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-octets</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.16</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-unicast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.17</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-multicast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.4</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-broadcast-pkts</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.31.1.1.1.5</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-discards</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.19</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics/if:out-errors</node-selector>
-        <corresponding-mib-oid xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1.3.6.1.2.1.2.2.1.20</corresponding-mib-oid>
-        <minimum-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</minimum-observable-period>
-        <suggested-observable-period xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata">1000</suggested-observable-period>
-      </per-node-capabilities>
-    </datastore-capabilities>
-  </system-capabilities>
-</data>
-</rpc-reply>
-            ]]></artwork>
-        </figure>
-      </t>
-
-      <t>
-         Example2: Demonstrating the querying metadata of all optimized-measurement-point(s). Use containment and selection nodes filtering criteria to express which all metadata you want. In this example: get query filter only to "select" the node-instance-identifier, optimized-measurement-point nodes, for the ietf-interfaces [RFC8343]. There are two optimized-measurement-points: interface and statistics.
-         <figure>
-            <artwork><![CDATA[
-   <!-- Request -->
- <rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-   <get>
-     <filter type="subtree">
-     <system-capabilities xmlns="urn:ietf:params:xml:ns:yang:ietf-system-capabilities"></system-capabilities>
-      <datastore-capabilities>
-        <datastore>ds:operational</datastore>
-        <per-node-capabilities>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-        </per-node-capabilities>
-      </datastore-capabilities>
-    </filter>
-   </get>
- </rpc>
-
-  <!-- Response -->
-
-<rpc-reply message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-  <data>
-  <system-capabilities xmlns="urn:ietf:params:xml:ns:yang:ietf-system-capabilities" xmlns:ds="urn:ietf:params:xml:ns:yang:ietf-datastores">
-    <datastore-capabilities>
-      <datastore>ds:operational</datastore>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-      </per-node-capabilities>
-      <per-node-capabilities>
-        <node-selector>/if:interfaces/if:interface/if:statistics</node-selector>
-        <optimized-measurement-point xmlns="urn:ietf:params:xml:ns:yang:ietf-system-node-metadata"/>
-      </per-node-capabilities>
-    </datastore-capabilities>
-  </system-capabilities>
-</data>
-</rpc-reply>
-            ]]></artwork>
-        </figure>
-      </t>
-    </section>
-
     <section title="Security Considerations" anchor="security-considerations">
       <t> 
          The YANG module specified in this document defines a schema for data 
@@ -440,10 +148,14 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
          as NETCONF <xref target="RFC6241"/> or RESTCONF <xref target="RFC8040"/>. The lowest NETCONF layer is the secure transport layer, and the mandatory-to-implement secure transport is Secure Shell (SSH) <xref target="RFC6242"/>. The lowest RESTCONF layer is HTTPS, and the mandatory-to-implement secure transport is TLS <xref target="RFC8446"/>.
       </t>
       <t>
-         The Network Configuration Access Control Model (NACM) [RFC8341] 
-         provides the means to restrict access for particular NETCONF or 
-         RESTCONF users to a preconfigured subset of all available NETCONF or 
-         RESTCONF protocol operations and content.
+         BGP data is sensible for security considerations. The model described
+          in this document could be used to send BGP information to malicious
+          BMP stations. Write access to this model should therefore be
+          properly protected. 
+      </t>
+      <t>
+          The session-reset action can demand considerable amount of resources
+          from network elements. It should be protected from illegal access.
       </t>
     </section>
 
@@ -457,7 +169,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
         <t>
           <figure>
           	<artwork>
-   URI: urn:ietf:params:xml:ns:yang:ietf-system-node-metadata
+   URI: urn:ietf:params:xml:ns:yang:ietf-bmp
    Registrant Contact: The NETCONF WG of the IETF.
    XML: N/A, the requested URI is an XML namespace.
              </artwork>
@@ -469,7 +181,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
     <section title="Open Issues">
       <t>
         <list counter="a">
-          <t>Shall we copy the TCP tuning parameters from the BGP specifications?</t>
+          <t>Shall we copy the TCP tuning and security parameters from the BGP specifications?</t>
         </list>
       </t>
     </section>

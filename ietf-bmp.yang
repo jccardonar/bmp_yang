@@ -91,6 +91,13 @@ module ietf-bmp {
     grouping bmp_ip_connection {
       description "common elements for defining connectivity to a bmp station";
 
+      leaf destination-address {
+        type inet:ip-address;
+        description
+         "Destination IP address of station";
+        mandatory true;
+      }
+
       leaf local-address {
         type inet:ip-address;
         description
