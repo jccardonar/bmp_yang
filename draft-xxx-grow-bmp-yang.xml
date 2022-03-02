@@ -91,14 +91,14 @@
            the BGP Monitoring Protocol (BMP) <xref target="RFC7854"/>. The
            model provides parameters for defining BMP stations, tuning their
            session attributes, and monitoring their operational metrics. The
-           model also includes different parameters for selecting the data
-           to send to each BMP station as precise as possible.
+           model also includes parameters for selecting the BGP sources (e.g.
+           RIBs, peers, etc) to send to each BMP station.
        </t> 
     </section>  
 
-    <section title="Concepts" anchor="concepts">
+    <section title="Model summary" anchor="model_summary">
        <t>
-           The BMP YANG model provides the methods for managing BMP  monitoring stations. It includes:
+           The BMP YANG model provides the methods for managing BMP monitoring stations. It includes:
       </t>     
       <t> 
         <list style="symbols">
@@ -167,7 +167,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
       </t>
       <t>
           The session-reset action can demand considerable amount of resources
-          from network elements. It should be protected from illegal access.
+          from network elements. It should thus be protected from illegal access.
       </t>
     </section>
 
@@ -230,7 +230,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
 
     <section title="Acknowledgements" numbered="no">
         <t>
-          The authors would like to thank ... for their reviews and feedback.
+          The authors would like to thank Pierre Vander Vorst for his review and feedback.
         </t>
     </section>
 
