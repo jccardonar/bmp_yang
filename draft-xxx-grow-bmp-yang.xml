@@ -111,16 +111,18 @@
           <t> 
               BGP Data sources. The model requires the explicit configuration
               of the RIBs and address family to send to each monitoring
-              station. For Adj-RIB-in and Adj-RIB-out,both post and pre policy,
-              the the model also requires the peers from which to originate
+              station. For Adj-RIB-in and Adj-RIB-out, both post and pre policy,
+              the model also requires the peers from which to originate
               data. In those RIBs, the value "all_peers" can be used if the
               operators desires to receive data of all peers. 
           </t>
           <t> 
-              BMP station session statistics. 
+              Per BMP station status and statistics, such as established status, number 
+              of route-monitoring messages, number of route-mirroring messages, number 
+              of peer-down and peer-up messages, number of initiation messages.
           </t>
           <t> 
-              Session reset action.
+              BMP session reset RPC action.
           </t>
         </list>
       </t>     
@@ -193,6 +195,8 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
       <t>
         <list counter="a">
           <t>Shall we copy the TCP tuning and security parameters from the BGP specifications?</t>
+          <t>The security considerations section will have to be aligned with 
+              https://trac.ietf.org/trac/ops/wiki/yang-security-guidelines</t>
         </list>
       </t>
     </section>
