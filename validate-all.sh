@@ -1,3 +1,3 @@
 echo "Validating yang modes"
 
-pyang --ietf  ietf-bmp.yang
+pyang --ietf --max-line-length 69 ietf-bmp.yang
