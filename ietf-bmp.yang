@@ -1,7 +1,7 @@
 module ietf-bmp {
   yang-version 1.1;
   namespace "urn:ietf:params:xml:ns:yang:ietf-bmp";
-  prefix ietf-bmp;
+  prefix bmp;
 
   import ietf-inet-types {
     prefix inet;
@@ -17,12 +17,16 @@ module ietf-bmp {
   import ietf-bgp-types {
     prefix bt;
     reference
-      "RFC XXXX, BGP YANG Model for Service Provider Network.";
+      "RFC XXXX: BGP YANG module for Service Provider Network.
+       RFC-EDITOR: please update XXX with the RFC ID assigned 
+       to I-D.ietf-idr-bgp-model";
   }
   import ietf-bgp {
     prefix bgp;
     reference
-      "RFC XXXX: BGP YANG module for Service Provider Network.";
+      "RFC XXXX: BGP YANG module for Service Provider Network.
+       RFC-EDITOR: please update XXX with the RFC ID assigned 
+       to I-D.ietf-idr-bgp-model";
   }
 
   organization
@@ -71,7 +75,8 @@ module ietf-bmp {
     description
       "initial version";
     reference
-      "[RFC-to-be]: BMP YANG Module";
+      "RFC YYYY: BMP YANG Module
+      RFC-EDITOR: please update YYYY with this RFC ID";
   }
 
   typedef bmp_peer_types {
@@ -102,7 +107,7 @@ module ietf-bmp {
         "Local IP address to source connections";
     }
     leaf destination-port {
-      type inet:ip-address;
+      type inet:port-number;
       description
         "Destination port for connections";
     }
@@ -256,42 +261,42 @@ module ietf-bmp {
                established";
           }
           leaf total-route-monitoring-messages {
-            type uint32;
+            type uint64;
             config false;
             description
               "Number of route-monitoring messages sent since last
                successful connection";
           }
           leaf total-statistics-messages {
-            type uint32;
+            type uint64;
             config false;
             description
               "Number of statistics messages sent since last
                successful connection";
           }
           leaf total-peer-down-messages {
-            type uint32;
+            type uint64;
             config false;
             description
               "Number of peer-down messages sent since last
                successful connection";
           }
           leaf total-peer-up-messages {
-            type uint32;
+            type uint64;
             config false;
             description
               "Number of peer-up messages sent since last successful
                connection";
           }
           leaf total-initiation-messages {
-            type uint32;
+            type uint64;
             config false;
             description
               "Number of initiation messages sent since last
                successful connection";
           }
           leaf total-route-mirroring-messages {
-            type uint32;
+            type uint64;
             config false;
             description
               "Number of route-mirroring messages sent since last
