@@ -175,7 +175,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
     <section title="IANA Considerations" anchor="iana-considerations">
       <section title="The IETF XML Registry">
       	<t>
-      	   This document registers two URIs in the IETF XML 
+      	   This document registers a URIs in the IETF XML 
       	   registry <xref target="RFC3688"/>.  Following the format in 
            <xref target="RFC3688"/>, the following registrations are
            requested:</t>
@@ -183,8 +183,24 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
           <figure>
           	<artwork>
    URI: urn:ietf:params:xml:ns:yang:ietf-bmp
-   Registrant Contact: The NETCONF WG of the IETF.
+   Registrant Contact: The IESG.
    XML: N/A, the requested URI is an XML namespace.
+             </artwork>
+           </figure>
+         </t>
+      </section>
+      <section title="The YANG Module Name Registration">
+        <t>
+           This document registers the following YANG module in the "
+           YANG Module Names" registry  
+           registry <xref target="RFC6020"/>:</t>
+        <t>
+          <figure>
+            <artwork>
+   Name: ietf-bmp
+   Namespace: urn:ietf:params:xml:ns:yang:ietf-bmp
+   Prefix: bmp
+   Reference: [This RFC-to-be]
              </artwork>
            </figure>
          </t>
@@ -204,14 +220,17 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
 
   <back>
     <references title="Normative References"> 
-      <?rfc include="reference.RFC.7854"?>
-      <?rfc include="reference.RFC.6241"?>
-      <?rfc include="reference.RFC.8040"?>
-      <?rfc include="reference.RFC.6242"?>
-      <?rfc include="reference.RFC.8446"?>
       <?rfc include="reference.RFC.2119"?>
-      <?rfc include="reference.RFC.8174"?>
       <?rfc include="reference.RFC.3688"?>
+      <?rfc include="reference.RFC.6241"?>
+      <?rfc include="reference.RFC.6242"?>
+      <?rfc include="reference.RFC.6991"?>
+      <?rfc include="reference.RFC.7854"?>
+      <?rfc include="reference.RFC.8040"?>
+      <?rfc include="reference.RFC.8174"?>
+      <?rfc include="reference.RFC.8349"?>
+      <?rfc include="reference.RFC.8446"?>
+      <?rfc include='reference.I-D.ietf-idr-bgp-model'?>
     </references>
 <!--
     <references title="Informative References">
@@ -233,7 +252,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
 
     <section title="Acknowledgements" numbered="no">
         <t>
-          The authors would like to thank Pierre Vander Vorst for his review and feedback.
+          The authors would like to thank Pierre Vander Vorst and Tom Petch for their review and feedback.
         </t>
     </section>
 
