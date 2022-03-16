@@ -3,6 +3,10 @@ module ietf-bmp {
   namespace "urn:ietf:params:xml:ns:yang:ietf-bmp";
   prefix bmp;
 
+  import ietf-yang-types {
+     prefix yang;
+   }
+
   import ietf-inet-types {
     prefix inet;
     reference
@@ -14,6 +18,7 @@ module ietf-bmp {
       "RFC 8349, A YANG Data Model for Routing Management
        (NMDA Version).";
   }
+
   import ietf-bgp-types {
     prefix bt;
     reference
@@ -21,12 +26,19 @@ module ietf-bmp {
        RFC-EDITOR: please update XXX with the RFC ID assigned 
        to I-D.ietf-idr-bgp-model";
   }
+
   import ietf-bgp {
     prefix bgp;
     reference
       "RFC XXXX: BGP YANG module for Service Provider Network.
        RFC-EDITOR: please update XXX with the RFC ID assigned 
        to I-D.ietf-idr-bgp-model";
+  }
+
+  import ietf-netconf-acm {
+    prefix nacm;
+    reference
+      "RFC 8341: Network Configuration Access Control Model";
   }
 
   organization
@@ -84,11 +96,16 @@ module ietf-bmp {
       enum all_peers {
         value 10;
         description
-          "Selects all peers";
+          "Selects all peers.";
       }
     }
     description
-      "Enum values for peer selection specific for BMP";
+      "Enum values for peer selection specific for BMP.  The
+      all_peers value is an explicit way of defining that the device
+      should send the updates from/to all peers to the station.  The
+      module also allows the selection of individual peers (through
+      its remote-address), or use the bgp:peer-type to select the
+      type of peers.";
   }
 
   grouping bmp_ip_connection {
@@ -152,7 +169,7 @@ module ietf-bmp {
           }
           description
             "Peers can be identified by a remote-address,
-             or by a enum value corresponding to groups of peers.
+             or by an enum value corresponding to groups of peers.
              This way an operator can select all external peers,
              all internal peers, or all peers.";
         }
@@ -166,16 +183,23 @@ module ietf-bmp {
     container adj-rib-in-pre {
       description
         "Configuration for the adj-rib-in pre-policy";
+      reference 
+        "RFC7854: BGP Monitoring Protocol (BMP), Section 2.";
       uses bmp_peer_ribs_filter;
     }
     container adj-rib-in-post {
       description
         "Configuration for the adj-rib-in post-policy";
+      reference 
+        "RFC7854: BGP Monitoring Protocol (BMP), Section 2.";
       uses bmp_peer_ribs_filter;
     }
     container local-rib {
       description
         "Configuration for the local-rib";
+      reference 
+        "RFC9069: Support for Local RIB in the BGP Monitoring
+        Protocol (BMP), Section 3.";
       leaf enabled {
         type boolean;
         description
@@ -194,11 +218,17 @@ module ietf-bmp {
       description
         "Configuration for the adj-rib-out pre-policy";
       uses bmp_peer_ribs_filter;
+      reference 
+        "RFC8671: Support for Adj-RIB-Out in the BGP Monitoring
+        Protocol (BMP) , Section 3.";
     }
     container adj-rib-out-post {
       description
         "Configuration for the adj-rib-out post-policy";
       uses bmp_peer_ribs_filter;
+      reference 
+        "RFC8671: Support for Adj-RIB-Out in the BGP Monitoring
+        Protocol (BMP) , Section 3.";
     }
   }
 
@@ -253,6 +283,20 @@ module ietf-bmp {
         container session-stats {
           description
             "stats and operational values for the station";
+
+          leaf discontinuity-time {
+             type yang:date-and-time;
+             mandatory true;
+             description
+               "The time on the most recent occasion at which any one
+               or more of this station's counters suffered a
+               discontinuity.  If no such discontinuities have
+               occurred since the last re-initialization of the local
+               management subsystem, then this node contains the time
+               the local management subsystem re-initialized
+               itself.";
+           }
+
           leaf established-session {
             type boolean;
             config false;
@@ -305,7 +349,9 @@ module ietf-bmp {
         }
       }
     }
+
     container actions {
+      nacm:default-deny-all;
       description
         "Container with the actions for the BMP operation";
       action session-reset {
