@@ -91,9 +91,9 @@ module ietf-bmp {
       RFC-EDITOR: please update YYYY with this RFC ID";
   }
 
-  typedef bmp_peer_types {
+  typedef bmp-peer-types {
     type enumeration {
-      enum all_peers {
+      enum all-peers {
         value 10;
         description
           "Selects all peers.";
@@ -101,14 +101,14 @@ module ietf-bmp {
     }
     description
       "Enum values for peer selection specific for BMP.  The
-      all_peers value is an explicit way of defining that the device
-      should send the updates from/to all peers to the station.  The
-      module also allows the selection of individual peers (through
-      its remote-address), or use the bgp:peer-type to select the
-      type of peers.";
+      all-peers value is an explicit way of defining that the device
+      should send the updates from all peers to the station for
+      a particular RIB/AFI.  The module also allows the selection
+      of individual peers (through its remote-address), or use the
+      bgp:peer-type to select the type of peers.";
   }
 
-  grouping bmp_ip_connection {
+  grouping bmp-ip-connection {
     description
       "common elements for defining connectivity
        to a bmp station";
@@ -130,7 +130,7 @@ module ietf-bmp {
     }
   }
 
-  grouping bmp_peer_ribs_filter {
+  grouping bmp-peer-ribs-filter {
     description
       "Leaves for configuring RIBs where
        origin/destination peers are well defined.";
@@ -165,7 +165,7 @@ module ietf-bmp {
                  + "bgp:neighbors/bgp:neighbor/bgp:remote-address";
             }
             type bt:peer-type;
-            type bmp_peer_types;
+            type bmp-peer-types;
           }
           description
             "Peers can be identified by a remote-address,
@@ -177,7 +177,7 @@ module ietf-bmp {
     }
   }
 
-  grouping bmp_route_monitoring_sources {
+  grouping bmp-route-monitoring-sources {
     description
       "";
     container adj-rib-in-pre {
@@ -185,14 +185,14 @@ module ietf-bmp {
         "Configuration for the adj-rib-in pre-policy";
       reference 
         "RFC7854: BGP Monitoring Protocol (BMP), Section 2.";
-      uses bmp_peer_ribs_filter;
+      uses bmp-peer-ribs-filter;
     }
     container adj-rib-in-post {
       description
         "Configuration for the adj-rib-in post-policy";
       reference 
         "RFC7854: BGP Monitoring Protocol (BMP), Section 2.";
-      uses bmp_peer_ribs_filter;
+      uses bmp-peer-ribs-filter;
     }
     container local-rib {
       description
@@ -217,7 +217,7 @@ module ietf-bmp {
     container adj-rib-out-pre {
       description
         "Configuration for the adj-rib-out pre-policy";
-      uses bmp_peer_ribs_filter;
+      uses bmp-peer-ribs-filter;
       reference 
         "RFC8671: Support for Adj-RIB-Out in the BGP Monitoring
         Protocol (BMP) , Section 3.";
@@ -225,14 +225,14 @@ module ietf-bmp {
     container adj-rib-out-post {
       description
         "Configuration for the adj-rib-out post-policy";
-      uses bmp_peer_ribs_filter;
+      uses bmp-peer-ribs-filter;
       reference 
         "RFC8671: Support for Adj-RIB-Out in the BGP Monitoring
         Protocol (BMP) , Section 3.";
     }
   }
 
-  grouping bmp_session_options {
+  grouping bmp-session-options {
     description
       "leaves for configuration of the bmp session";
     leaf initiation-message {
@@ -268,17 +268,17 @@ module ietf-bmp {
         container connection {
           description
             "Connection details for the station";
-          uses bmp_ip_connection;
+          uses bmp-ip-connection;
         }
         container bmp_session {
           description
             "BMP session options for the station";
-          uses bmp_session_options;
+          uses bmp-session-options;
         }
         container bmp_sources {
           description
             "Configuration of the data sources for the station";
-          uses bmp_route_monitoring_sources;
+          uses bmp-route-monitoring-sources;
         }
         container session-stats {
           description
