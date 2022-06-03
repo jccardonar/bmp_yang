@@ -12,6 +12,7 @@ idnits ?= idnits
 
 draft := $(basename $(lastword $(sort $(wildcard draft-*.xml)) $(sort $(wildcard draft-*.md)) $(sort $(wildcard draft-*.org)) ))
 
+
 ifeq (,$(draft))
 $(warning No file named draft-*.md or draft-*.xml or draft-*.org)
 $(error Read README.md for setup instructions)
@@ -21,11 +22,12 @@ draft_type := $(suffix $(firstword $(wildcard $(draft).md $(draft).org $(draft).
 
 current_ver := $(shell git tag | grep '$(draft)-[0-9][0-9]' | tail -1 | sed -e"s/.*-//")
 ifeq "${current_ver}" ""
-next_ver ?= 02
+next_ver ?= 00
 else
 next_ver ?= $(shell printf "%.2d" $$((1$(current_ver)-99)))
 endif
 next := $(draft)-$(next_ver)
+
 
 .PHONY: latest submit clean
 
