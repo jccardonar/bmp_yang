@@ -110,7 +110,7 @@
           </t>
           <t> 
               BGP Data sources. The model requires the explicit configuration
-              of the RIBs and address family to send to each monitoring
+              of the Network instance, RIBs and address family to send to each monitoring
               station. For Adj-RIB-in and Adj-RIB-out, both post and pre policy,
               the model also requires the peers from which to originate
               data. In those RIBs, the value "all_peers" can be used if the
@@ -218,7 +218,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
     <section title="Open Issues">
       <t>
         <list counter="a">
-          <t>Shall we copy the TCP tuning and security parameters from the BGP specifications?</t>
+          <t>Shall we leverage other IETF models to specify TCP parameters?</t>
           <t>The security considerations section will have to be aligned with 
               https://trac.ietf.org/trac/ops/wiki/yang-security-guidelines</t>
         </list>
@@ -259,6 +259,50 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
       </t>
     </section>    
   -->
+
+    <section title="Examples">
+        <t>This section shows an example of a BMP configuration using the model.
+        In the example, the device will send information from the global
+        network instance, the adj-rib-out-pre RIB, IPv4 AFI, and only from
+        peers that are external.
+    </t>
+        <t><figure>
+            <artwork><![CDATA[
+<bmp xmlns="urn:ietf:params:xml:ns:yang:ietf-bmp">
+    <stations>
+      <station>
+        <id>1</id>
+        <connection>
+          <active>
+            <network-instance>global</network-instance>
+            <station-address>203.0.113.1</station-address>
+            <station-port>27716</station-port>
+            <local-address>203.0.113.2</local-address>
+          </active>
+        </connection>
+        <bmp_sources>
+          <network-instances>
+            <network-instance>
+              <network-instance-id>global</network-instance-id>
+              <adj-rib-in-pre>
+                <enabled>true</enabled>
+                <address-families>
+                  <address-family>
+                      <name xmlns:bt="urn:ietf:params:xml:ns:yang:\/
+                      ietf-bgp-types">bt:ipv4-unicast</name>
+                    <peers>external</peers>
+                  </address-family>
+                </address-families>
+              </adj-rib-out-pre>
+            </network-instance>
+          </network-instances>
+        </bmp_sources>
+      </station>
+    </stations>
+</bmp>
+]]></artwork>         
+    </figure></t>
+    </section>
 
     <section title="Acknowledgements" numbered="no">
         <t>

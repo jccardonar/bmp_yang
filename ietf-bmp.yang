@@ -194,7 +194,7 @@ module ietf-bmp {
     description
       "common elements for defining connectivity
        to a bmp station";
-    choice passiv_or_active {
+    choice passive_or_active {
       description
         "Choice for active or passive connection";
       case active {
@@ -277,7 +277,7 @@ module ietf-bmp {
           leaf local-port {
             type inet:port-number;
             description
-              "Local port to wait for the connectoin";
+              "Local port to wait for the connection";
           }
 
         }
@@ -542,44 +542,39 @@ module ietf-bmp {
           }
         }
       }
-    }
 
-    container actions {
-      nacm:default-deny-all;
-      description
-        "Container with the actions for the BMP operation";
-      action session-reset {
+      container actions {
+        nacm:default-deny-all;
         description
-          "Resets the session for a station.";
-        input {
-          leaf station {
-            type leafref {
-              path "/bmp/stations/station/id";
-            }
-            description
-              "Identifies the station to reset";
-          }
-        }
-        output {
-          choice outcome {
-            description
-              "Output of the reset operation. Either a success or
-               failure. For the latter, the reason for the 
-               error is provided.";
-            leaf success {
-              type empty;
+          "Container with the actions for the BMP operation";
+        action session-reset {
+          description
+            "Resets the session for a station.";
+          output {
+            choice outcome {
               description
-                "Reset successful";
-            }
-            leaf failure {
-              type string;
-              description
-                "Reset could not be performed. 
-                Reason is included in the field";
+                "Output of the reset operation. Either a success or
+                 failure. For the latter, the reason for the 
+                 error is provided.";
+              leaf success {
+                type empty;
+                description
+                  "Reset successful";
+              }
+              leaf failure {
+                type string;
+                description
+                  "Reset could not be performed. 
+                  Reason is included in the field";
+              }
             }
           }
         }
       }
+
+
     }
+
+
   }
 }
