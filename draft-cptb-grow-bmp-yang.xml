@@ -112,9 +112,9 @@
               BGP Data sources. The model requires the explicit configuration
               of the Network instance, RIBs and address family to send to each monitoring
               station. For Adj-RIB-in and Adj-RIB-out, both post and pre policy,
-              the model also requires the peers from which to originate
-              data. In those RIBs, the value "all_peers" can be used if the
-              operators desires to receive data of all peers. 
+              the model also requires to reference the peer.
+              In those RIBs, the value "all_peers" can be used if the
+              operators desire to receive data of all peers.
           </t>
           <t> 
               Per BMP station status and statistics, such as established status, number 
@@ -165,7 +165,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
           HTTPS, and the mandatory-to-implement secure transport is TLS <xref
           target="RFC8446"/>. The NETCONF Access Control Model (NACM) <xref
               target="RFC8341"/> provides the means to restrict access for
-          particular NETCONF or RESTCONF users to a preconfigured subset of all
+          NETCONF or RESTCONF users to a preconfigured subset of all
           available NETCONF or RESTCONF protocol operations and content. 
       </t>
       <t>
