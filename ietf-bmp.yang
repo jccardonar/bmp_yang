@@ -42,23 +42,30 @@ module ietf-bmp {
   }
 
   import ietf-tcp-common {
-       prefix "tcpcmn";
-       reference
-         "I-D.ietf-netconf-tcp-client-server: YANG Groupings for TCP
-          Clients and TCP Servers.";
+    prefix "tcpcmn";
+    reference
+      "I-D.ietf-netconf-tcp-client-server: YANG Groupings for TCP
+       Clients and TCP Servers.";
   }
 
   import ietf-tcp {
-       prefix "tcp";
-       reference
-         "I-D.ietf-tcpm-yang-tcp: A YANG Model for 
-         Transmission Control Protocol (TCP) Configuration";
+    prefix "tcp";
+    reference
+      "I-D.ietf-tcpm-yang-tcp: A YANG Model for 
+      Transmission Control Protocol (TCP) Configuration";
   }
 
   import ietf-network-instance {
-       prefix "ni";
-       reference
-       "RFC 8529: YANG Data Model for Network Instances";
+    prefix "ni";
+    reference
+    "RFC 8529: YANG Data Model for Network Instances";
+  }
+
+  import ietf-routing-policy {
+    prefix "rt-pol";
+    reference
+    "RFC 9067: A YANG Data Model for Routing Policy";
+
   }
 
   organization
@@ -286,6 +293,39 @@ module ietf-bmp {
     }
   }
 
+  grouping bmp-source-configuration {
+    description
+    "Group containing some general characteristics for configuring
+    a BMP source";
+    container filters {
+      description 
+      "Contains containers specifying filters for deciding 
+      which routes to export to the station";
+      container policy_filter {
+          description
+          "Filter routes based on a policy";
+          leaf-list export-policy {
+           type leafref {
+             path "/rt-pol:routing-policy/rt-pol:policy-definitions/"
+                + "rt-pol:policy-definition/rt-pol:name";
+             require-instance true;
+           }
+           ordered-by user;
+           description
+              "List of policy names in sequence used to select
+              routes to be exported to station.";
+         }
+         leaf default-export-policy {
+           type rt-pol:default-policy-type;
+           default "accept-route";
+           description
+             "Explicitly set a default policy if no policy definition
+              in the export policy chain is satisfied.";
+         }
+      }
+    }
+  }
+
   grouping bmp-peer-ribs-filter {
     description
       "Leaves for configuring RIBs where
@@ -314,23 +354,37 @@ module ietf-bmp {
           description
             "Name of the address family";
         }
-        leaf-list peers {
-          type union {
-            type leafref {
-              path "/rt:routing/rt:control-plane-protocols/"
-                 + "rt:control-plane-protocol/bgp:bgp/"
-                 + "bgp:neighbors/bgp:neighbor/bgp:remote-address";
-            }
-            type bt:peer-type;
-            type identityref {
-              base bmp-peer-types-idty;
-            }
-          }
+        container peers {
           description
-            "Peers can be identified by a remote-address,
-             or by an enum value corresponding to groups of peers.
-             This way an operator can select all external peers,
-             all internal peers, or all peers.";
+          "Identification of peers 
+          for which we should send BMP data to collector";
+          list peer {
+            key "peer-id";
+            description
+            "Identification of peers 
+            for which we should send BMP data to collector";
+            leaf peer-id {
+              type union {
+                type leafref {
+                  path "/rt:routing/rt:control-plane-protocols/"
+                  + "rt:control-plane-protocol/bgp:bgp/"
+                  + "bgp:neighbors/bgp:neighbor/bgp:remote-address";
+                }
+                type bt:peer-type;
+                type identityref {
+                  base bmp-peer-types-idty;
+                }
+              }
+              description
+                "Peers can be identified by a remote-address,
+                 or by an enum value corresponding to groups 
+                 of peers.  This way an operator can 
+                 select all external peers, all internal 
+                 peers, or all peers.";
+            }
+            uses bmp-source-configuration;
+
+          }
         }
       }
     }
@@ -392,13 +446,23 @@ module ietf-bmp {
             description
               "Enables the specified RIB";
           }
-          leaf-list address-families {
-            type identityref {
-              base bt:afi-safi-type;
-            }
+          container address-families {
             description
               "List of address families to enable for
                local-rib.";
+            list address-family {
+              key "address-family-id";
+              description
+               "Address family to enable for local-rib";
+              leaf address-family-id {
+                type identityref {
+                  base bt:afi-safi-type;
+                }
+                description
+                "Address family id to enable for local-rib";
+              }
+              uses bmp-source-configuration;
+            }
           }
         }
         container adj-rib-out-pre {
@@ -462,6 +526,48 @@ module ietf-bmp {
             "Connection details for the station";
           uses bmp-ip-connection;
           uses bmp-tcp-options;
+
+          leaf initial-delay {
+            type uint32;
+            default 0;
+            units "seconds";
+            description
+              "Initial delay of the connection to the station";
+          }
+
+          container backoff {
+            description
+              "Configures the backoff strategy after a connection retry";
+            choice backoff-options {
+              description
+                "Options for backoff strategies";
+              case simple_exponential {
+                description 
+                  "Simple exponential backoff with limits.";
+                container simple_exponential {
+                  description 
+                    "Simple exponential backoff with limits. 
+                    Starts with the initial backoff and doubles
+                    the backoff of every retry until reaching the 
+                    maximum backoff";
+                  leaf initial-backoff {
+                    type uint32;
+                    default 30;
+                    units "seconds";
+                    description
+                      "Initial backoff time";
+                  }
+                  leaf maximum-backoff {
+                    type uint32;
+                    default 720;
+                    units "seconds";
+                    description
+                      "Maximum backoff time";
+                  }
+                }
+              }
+            }
+          }
         }
 
         container bmp_session {
@@ -472,7 +578,12 @@ module ietf-bmp {
         container bmp_sources {
           description
             "Configuration of the data sources for the station";
-          uses bmp-route-monitoring-sources;
+          container bmp-route-monitoring {
+            description
+              "Configuration of the data sources for route-monitoring
+              messages";
+            uses bmp-route-monitoring-sources;
+          }
         }
         container session-stats {
           description
