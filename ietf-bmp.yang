@@ -131,7 +131,8 @@ module ietf-bmp {
   }
 
   identity bmp-ni-types-idty {
-    description "Enum values for network instances specific for BMP";
+    description "Enum values for network instances 
+      specific for BMP";
   }
   
   identity bmp-ni-types-all-ni-idty {
@@ -306,7 +307,8 @@ module ietf-bmp {
           "Filter routes based on a policy";
           leaf-list export-policy {
            type leafref {
-             path "/rt-pol:routing-policy/rt-pol:policy-definitions/"
+             path "/rt-pol:routing-policy/"
+                + "rt-pol:policy-definitions/"
                 + "rt-pol:policy-definition/rt-pol:name";
              require-instance true;
            }
@@ -319,8 +321,9 @@ module ietf-bmp {
            type rt-pol:default-policy-type;
            default "accept-route";
            description
-             "Explicitly set a default policy if no policy definition
-              in the export policy chain is satisfied.";
+             "Explicitly set a default policy if no policy 
+             definition in the export policy chain 
+             is satisfied.";
          }
       }
     }
@@ -581,8 +584,8 @@ module ietf-bmp {
             "Configuration of the data sources for the station";
           container bmp-route-monitoring {
             description
-              "Configuration of the data sources for route-monitoring
-              messages";
+              "Configuration of the data sources for 
+              route-monitoring messages";
             uses bmp-route-monitoring-sources;
           }
         }
@@ -594,13 +597,13 @@ module ietf-bmp {
              type yang:date-and-time;
              mandatory true;
              description
-               "The time on the most recent occasion at which any one
-               or more of this station's counters suffered a
+               "The time on the most recent occasion at which any
+               one or more of this station's counters suffered a
                discontinuity.  If no such discontinuities have
-               occurred since the last re-initialization of the local
-               management subsystem, then this node contains the time
-               the local management subsystem re-initialized
-               itself.";
+               occurred since the last re-initialization of the
+               local management subsystem, then this node contains
+               the time the local management subsystem
+               re-initialized itself.";
            }
 
           leaf established-session {

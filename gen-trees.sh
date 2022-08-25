@@ -4,7 +4,7 @@
 
 echo "Generating tree diagrams..."
 
-pyang  --ietf -f tree --tree-line-length 69 ietf-bmp.yang > ietf-bmp-trees.txt
+pyang  --ietf -f tree --tree-line-length 65 ietf-bmp.yang > ietf-bmp-trees.txt
 
 #pyang -p ../ -f tree --tree-line-length 69 --tree-print-groupings ../ietf-tls-client\@*.yang > ietf-tls-client-tree.txt
 #pyang -p ../ -f tree --tree-line-length 69 --tree-print-groupings ../ietf-tls-server\@*.yang > ietf-tls-server-tree.txt
