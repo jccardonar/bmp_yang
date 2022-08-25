@@ -529,15 +529,16 @@ module ietf-bmp {
 
           leaf initial-delay {
             type uint32;
-            default 0;
             units "seconds";
+            default 0;
             description
               "Initial delay of the connection to the station";
           }
 
           container backoff {
             description
-              "Configures the backoff strategy after a connection retry";
+              "Configures the backoff strategy after a connection 
+              retry";
             choice backoff-options {
               description
                 "Options for backoff strategies";
@@ -552,15 +553,15 @@ module ietf-bmp {
                     maximum backoff";
                   leaf initial-backoff {
                     type uint32;
-                    default 30;
                     units "seconds";
+                    default 30;
                     description
                       "Initial backoff time";
                   }
                   leaf maximum-backoff {
                     type uint32;
-                    default 720;
                     units "seconds";
+                    default 720;
                     description
                       "Maximum backoff time";
                   }
