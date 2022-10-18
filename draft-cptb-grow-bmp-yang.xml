@@ -171,12 +171,12 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
       <t>
          BGP data is sensible for security considerations. The model described
           in this document could be used to send BGP information to malicious
-          BMP stations. Write access to this model should therefore be
+          BMP stations. Write access to this model SHOULD therefore be
           properly protected. 
       </t>
       <t>
           The session-reset action can demand considerable amount of resources
-          from network elements. It should thus be protected from illegal access.
+          from network elements. It SHOULD thus be protected from illegal access.
       </t>
     </section>
 
@@ -234,13 +234,18 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
       <?rfc include="reference.RFC.6242"?>
       <?rfc include="reference.RFC.6991"?>
       <?rfc include="reference.RFC.7854"?>
+      <?rfc include="reference.RFC.8671"?>
+      <?rfc include="reference.RFC.9069"?>
       <?rfc include="reference.RFC.8040"?>
       <?rfc include="reference.RFC.8174"?>
       <?rfc include="reference.RFC.8349"?>
       <?rfc include="reference.RFC.8446"?>
       <?rfc include="reference.RFC.8341"?>
       <?rfc include="reference.RFC.6020"?>
+      <?rfc include="reference.RFC.8529"?>
       <?rfc include='reference.I-D.ietf-idr-bgp-model'?>
+      <?rfc include='reference.I-D.ietf-netconf-tcp-client-server'?>
+      <?rfc include='reference.I-D.ietf-tcpm-yang-tcp'?>
     </references>
 <!--
     <references title="Informative References">
@@ -276,11 +281,11 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
           <active>
             <network-instance>global</network-instance>
             <station-address>203.0.113.1</station-address>
-            <station-port>27716</station-port>
+            <station-port>49192</station-port>
             <local-address>203.0.113.2</local-address>
           </active>
         </connection>
-        <bmp_sources>
+        <bmp-sources>
           <network-instances>
             <network-instance>
               <network-instance-id>global</network-instance-id>
@@ -296,7 +301,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
               </adj-rib-out-pre>
             </network-instance>
           </network-instances>
-        </bmp_sources>
+        </bmp-sources>
       </station>
     </stations>
 </bmp>
@@ -306,7 +311,7 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
 
     <section title="Acknowledgements" numbered="no">
         <t>
-          The authors would like to thank Pierre Vander Vorst and Tom Petch for their review and feedback.
+          The authors would like to thank Jeff Haas, Pierre Vander Vorst, and Tom Petch for their review and feedback.
         </t>
     </section>
 

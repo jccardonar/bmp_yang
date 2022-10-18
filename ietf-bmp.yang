@@ -22,7 +22,7 @@ module ietf-bmp {
   import ietf-bgp-types {
     prefix bt;
     reference
-      "RFC XXXX: BGP YANG module for Service Provider Network.
+      "RFC AAAA: BGP YANG module for Service Provider Network.
        RFC-EDITOR: please update XXX with the RFC ID assigned 
        to I-D.ietf-idr-bgp-model";
   }
@@ -30,7 +30,7 @@ module ietf-bmp {
   import ietf-bgp {
     prefix bgp;
     reference
-      "RFC XXXX: BGP YANG module for Service Provider Network.
+      "RFC BBBB: BGP YANG module for Service Provider Network.
        RFC-EDITOR: please update XXX with the RFC ID assigned 
        to I-D.ietf-idr-bgp-model";
   }
@@ -110,7 +110,7 @@ module ietf-bmp {
      (https://www.rfc-editor.org/info/rfc9196); see the RFC itself
      for full legal notices.";
 
-  revision 2022-01-27 {
+  revision 2022-10-18 {
     description
       "initial version";
     reference
@@ -125,7 +125,7 @@ module ietf-bmp {
   identity bmp-peer-types-all-peers-idty {
     base bmp-peer-types-idty;
     description "This identify is an explicit way 
-      of defining that the device should send the 
+      of defining that the device SHOULD send the 
       updates from all peers to the station for a 
       particular RIB/AFI."; 
   }
@@ -138,7 +138,7 @@ module ietf-bmp {
   identity bmp-ni-types-all-ni-idty {
     base bmp-ni-types-idty;
     description "The identify is an explicit way 
-      of defining that the device should send the 
+      of defining that the device SHOULD send the 
       updates from all network instances."; 
   }
 
@@ -202,12 +202,12 @@ module ietf-bmp {
     description
       "common elements for defining connectivity
        to a bmp station";
-    choice passive_or_active {
+    choice passive-or-active {
       description
         "Choice for active or passive connection";
       case active {
         description
-          "The device starts the connection to  the station";
+          "The device starts the connection to the station";
         container active {
           description
             "The device starts the connection to  the station";
@@ -250,12 +250,12 @@ module ietf-bmp {
 
       case passive {
         description
-          "The device waits for the connection to 
-          start the connection to a local endpoint";
+          "The device waits for the connection 
+          in a local endpoint";
         container passive {
           description
             "The device waits for the connection 
-            to start the connection to a local endpoint";
+            in a local endpoint";
           leaf network-instance {
             type leafref {
               path "/ni:network-instances/ni:network-instance/"
@@ -263,7 +263,7 @@ module ietf-bmp {
             }
             mandatory true;
             description 
-              "Network-instance to used to reach the station.";
+              "Network-instance to use to reach the station.";
           }
           leaf station-address {
             type inet:ip-address;
@@ -275,7 +275,7 @@ module ietf-bmp {
             type inet:port-number;
             description
               "Optional port identifying the connection, 
-              if provided it must match";
+              if provided it MUST match";
           }
           leaf local-address {
             type inet:ip-address;
@@ -302,7 +302,7 @@ module ietf-bmp {
       description 
       "Contains containers specifying filters for deciding 
       which routes to export to the station";
-      container policy_filter {
+      container policy-filter {
           description
           "Filter routes based on a policy";
           leaf-list export-policy {
@@ -360,12 +360,12 @@ module ietf-bmp {
         container peers {
           description
           "Identification of peers 
-          for which we should send BMP data to collector";
+          for which we send BMP data to the collector";
           list peer {
             key "peer-id";
             description
             "Identification of peers 
-            for which we should send BMP data to collector";
+            for which we send BMP data to the collector";
             leaf peer-id {
               type union {
                 type leafref {
@@ -545,10 +545,10 @@ module ietf-bmp {
             choice backoff-options {
               description
                 "Options for backoff strategies";
-              case simple_exponential {
+              case simple-exponential {
                 description 
                   "Simple exponential backoff with limits.";
-                container simple_exponential {
+                container simple-exponential {
                   description 
                     "Simple exponential backoff with limits. 
                     Starts with the initial backoff and doubles
@@ -574,12 +574,12 @@ module ietf-bmp {
           }
         }
 
-        container bmp_session {
+        container bmp-session {
           description
             "BMP session options for the station";
           uses bmp-session-options;
         }
-        container bmp_sources {
+        container bmp-sources {
           description
             "Configuration of the data sources for the station";
           container bmp-route-monitoring {
