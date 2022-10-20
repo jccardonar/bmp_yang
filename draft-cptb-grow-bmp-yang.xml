@@ -243,9 +243,10 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
       <?rfc include="reference.RFC.8341"?>
       <?rfc include="reference.RFC.6020"?>
       <?rfc include="reference.RFC.8529"?>
+      <?rfc include="reference.RFC.1191"?>
+      <?rfc include="reference.RFC.8177"?>
       <?rfc include='reference.I-D.ietf-idr-bgp-model'?>
       <?rfc include='reference.I-D.ietf-netconf-tcp-client-server'?>
-      <?rfc include='reference.I-D.ietf-tcpm-yang-tcp'?>
     </references>
 <!--
     <references title="Informative References">
@@ -311,7 +312,8 @@ INSERT_TEXT_FROM_FILE(ietf-bmp.yang)
 
     <section title="Acknowledgements" numbered="no">
         <t>
-          The authors would like to thank Jeff Haas, Pierre Vander Vorst, and Tom Petch for their review and feedback.
+          The authors would like to thank Yimin Shen, Jeff Haas, Pierre Vander
+            Vorst, and Tom Petch for their review and feedback.
         </t>
     </section>
 
