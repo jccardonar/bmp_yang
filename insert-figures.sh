@@ -19,13 +19,13 @@ while ( grep INSERT_TEXT_FROM_FILE .tmp.new.txt >> /dev/null ); do
   awk "NR>$linenum" .tmp.new.txt > .tmp.post.txt
 
   cp $file $file.potentially-folded
-  #if [ `echo $file | grep ","` ]; then
-  #  col=`echo $file | sed 's/.*,//'`
-  #  file=`echo $file | sed 's/,.*//'`
-  #  $FOLD -c $col -i $file -o $file.potentially-folded
-  #else
-  #  $FOLD -i $file -o $file.potentially-folded
-  #fi
+  if [ `echo $file | grep ","` ]; then
+    col=`echo $file | sed 's/.*,//'`
+    file=`echo $file | sed 's/,.*//'`
+    $FOLD -c $col -i $file -o $file.potentially-folded
+  else
+    $FOLD -i $file -o $file.potentially-folded
+  fi
 
   cat .tmp.pre.txt $file.potentially-folded .tmp.post.txt > .tmp.new.txt
   rm $file.potentially-folded
