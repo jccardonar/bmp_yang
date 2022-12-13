@@ -1,0 +1,187 @@
+module ietf-bmp-monitoring-ribs {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:bmp-monitoring-ribs";
+  prefix bmp-monitoring-ribs;
+  import ietf-bmp {
+     prefix bmp;
+  }
+  import ietf-network-instance {
+    prefix "ni";
+    reference
+    "RFC 8529: YANG Data Model for Network Instances";
+  }
+  import ietf-routing {
+    prefix rt;
+    reference
+      "RFC 8349, A YANG Data Model for Routing Management
+       (NMDA Version).";
+  }
+  import ietf-bgp {
+    prefix bgp;
+    reference
+      "RFC BBBB: BGP YANG module for Service Provider Network.
+       RFC-EDITOR: please update XXX with the RFC ID assigned 
+       to I-D.ietf-idr-bgp-model";
+  }
+  import ietf-bgp-types {
+    prefix bt;
+    reference
+      "RFC AAAA: BGP YANG module for Service Provider Network.
+       RFC-EDITOR: please update XXX with the RFC ID assigned 
+       to I-D.ietf-idr-bgp-model";
+  }
+
+  description
+    "This module adds monitoring containers 
+    to the ribs";
+
+  revision 2022-10-18 {
+    description
+      "initial version";
+    reference
+      "RFC YYYY: BMP YANG Module
+      RFC-EDITOR: please update YYYY with this RFC ID";
+  }
+
+  grouping bmp-local-rib-monitoring {
+    description
+      "stats and monitoring information for local  RIB";
+    container rib-monitoring {
+      config false;
+      container rib-stats {
+        leaf total-nlri {
+          type uint64;
+          description
+            "Total number of nlris send to the station for this RIB";
+        }
+
+      }
+      container covering-config {
+        description
+        "The key tuple for the configured rib that is covering this RIB";
+
+        leaf network-instance-id {
+          type union {
+            type leafref {
+              path "/ni:network-instances/ni:network-instance/"
+                 + "ni:name";
+            }
+            type identityref {
+              base bmp:bmp-ni-types-all-ni-idty;
+            }
+          }
+          description 
+            "Identification of a network-instance.
+            Network instances can be identified
+            directly by their path or one can define all of 
+            them using an identity";
+            
+        }
+        leaf address-family {
+          type leafref {
+            path "/rt:routing/rt:control-plane-protocols/"
+               + "rt:control-plane-protocol/bgp:bgp/"
+               + "bgp:global/bgp:afi-safis/bgp:afi-safi/bgp:name";
+          }
+          description
+            "Name of the address family";
+        }
+
+
+      }
+
+
+    }
+
+  }
+
+  grouping bmp-peer-rib-monitoring {
+    description
+      "stats and monitoring information for peer RIBs";
+    container rib-monitoring {
+      config false;
+      container rib-stats {
+        leaf total-nlri {
+          type uint64;
+          description
+            "Total number of nlris send to the station for this RIB";
+        }
+
+      }
+      container covering-config {
+        description
+        "The key tuple for the configured rib that is covering this peer";
+
+        leaf network-instance-id {
+          type union {
+            type leafref {
+              path "/ni:network-instances/ni:network-instance/"
+                 + "ni:name";
+            }
+            type identityref {
+              base bmp:bmp-ni-types-all-ni-idty;
+            }
+          }
+          description 
+            "Identification of a network-instance.
+            Network instances can be identified
+            directly by their path or one can define all of 
+            them using an identity";
+            
+        }
+        leaf address-family {
+          type leafref {
+            path "/rt:routing/rt:control-plane-protocols/"
+               + "rt:control-plane-protocol/bgp:bgp/"
+               + "bgp:global/bgp:afi-safis/bgp:afi-safi/bgp:name";
+          }
+          description
+            "Name of the address family";
+        }
+        leaf peer-id {
+          type union {
+            type leafref {
+              path "/rt:routing/rt:control-plane-protocols/"
+              + "rt:control-plane-protocol/bgp:bgp/"
+              + "bgp:neighbors/bgp:neighbor/bgp:remote-address";
+            }
+            type bt:peer-type;
+            type identityref {
+              base bmp:bmp-peer-types-idty;
+            }
+          }
+          description
+            "Peers can be identified by a remote-address,
+             or by an enum value corresponding to groups 
+             of peers.  This way an operator can 
+             select all external peers, all internal 
+             peers, or all peers.";
+        }
+
+
+      }
+
+
+    }
+  }
+
+  augment /bmp:bmp/bmp:stations/bmp:station/bmp:bmp-sources/bmp:bmp-route-monitoring/bmp:network-instances/bmp:network-instance/bmp:local-rib/bmp:address-families/bmp:address-family {
+    uses bmp-local-rib-monitoring;
+  }
+
+  augment /bmp:bmp/bmp:stations/bmp:station/bmp:bmp-sources/bmp:bmp-route-monitoring/bmp:network-instances/bmp:network-instance/bmp:adj-rib-in-pre/bmp:address-families/bmp:address-family/bmp:peers/bmp:peer {
+    uses bmp-peer-rib-monitoring;
+  }
+
+  augment /bmp:bmp/bmp:stations/bmp:station/bmp:bmp-sources/bmp:bmp-route-monitoring/bmp:network-instances/bmp:network-instance/bmp:adj-rib-in-post/bmp:address-families/bmp:address-family/bmp:peers/bmp:peer {
+    uses bmp-peer-rib-monitoring;
+  }
+
+  augment /bmp:bmp/bmp:stations/bmp:station/bmp:bmp-sources/bmp:bmp-route-monitoring/bmp:network-instances/bmp:network-instance/bmp:adj-rib-out-pre/bmp:address-families/bmp:address-family/bmp:peers/bmp:peer {
+    uses bmp-peer-rib-monitoring;
+  }
+
+  augment /bmp:bmp/bmp:stations/bmp:station/bmp:bmp-sources/bmp:bmp-route-monitoring/bmp:network-instances/bmp:network-instance/bmp:adj-rib-out-post/bmp:address-families/bmp:address-family/bmp:peers/bmp:peer {
+    uses bmp-peer-rib-monitoring;
+  }
+}

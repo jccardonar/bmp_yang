@@ -1,8 +1,0 @@
-module ietf-bmp {
-  yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang:ietf-bmp-monitoring-sessions";
-  prefix bmp-rib-monitoring;
-
-
-
-}

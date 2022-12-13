@@ -141,127 +141,6 @@ module ietf-bmp {
       updates from all network instances."; 
   }
 
-  grouping bmp-local-rib-monitoring {
-    description
-      "stats and monitoring information for local  RIB";
-    container rib-monitoring {
-      config false;
-      container rib-stats {
-        leaf total-nlri {
-          type uint64;
-          description
-            "Total number of nlris send to the station for this RIB";
-        }
-
-      }
-      container covering-config {
-        description
-        "The key tuple for the configured rib that is covering this RIB";
-
-        leaf network-instance-id {
-          type union {
-            type leafref {
-              path "/ni:network-instances/ni:network-instance/"
-                 + "ni:name";
-            }
-            type identityref {
-              base bmp-ni-types-all-ni-idty;
-            }
-          }
-          description 
-            "Identification of a network-instance.
-            Network instances can be identified
-            directly by their path or one can define all of 
-            them using an identity";
-            
-        }
-        leaf address-family {
-          type leafref {
-            path "/rt:routing/rt:control-plane-protocols/"
-               + "rt:control-plane-protocol/bgp:bgp/"
-               + "bgp:global/bgp:afi-safis/bgp:afi-safi/bgp:name";
-          }
-          description
-            "Name of the address family";
-        }
-
-
-      }
-
-
-    }
-
-  }
-
-  grouping bmp-peer-rib-monitoring {
-    description
-      "stats and monitoring information for peer RIBs";
-    container rib-monitoring {
-      config false;
-      container rib-stats {
-        leaf total-nlri {
-          type uint64;
-          description
-            "Total number of nlris send to the station for this RIB";
-        }
-
-      }
-      container covering-config {
-        description
-        "The key tuple for the configured rib that is covering this peer";
-
-        leaf network-instance-id {
-          type union {
-            type leafref {
-              path "/ni:network-instances/ni:network-instance/"
-                 + "ni:name";
-            }
-            type identityref {
-              base bmp-ni-types-all-ni-idty;
-            }
-          }
-          description 
-            "Identification of a network-instance.
-            Network instances can be identified
-            directly by their path or one can define all of 
-            them using an identity";
-            
-        }
-        leaf address-family {
-          type leafref {
-            path "/rt:routing/rt:control-plane-protocols/"
-               + "rt:control-plane-protocol/bgp:bgp/"
-               + "bgp:global/bgp:afi-safis/bgp:afi-safi/bgp:name";
-          }
-          description
-            "Name of the address family";
-        }
-        leaf peer-id {
-          type union {
-            type leafref {
-              path "/rt:routing/rt:control-plane-protocols/"
-              + "rt:control-plane-protocol/bgp:bgp/"
-              + "bgp:neighbors/bgp:neighbor/bgp:remote-address";
-            }
-            type bt:peer-type;
-            type identityref {
-              base bmp-peer-types-idty;
-            }
-          }
-          description
-            "Peers can be identified by a remote-address,
-             or by an enum value corresponding to groups 
-             of peers.  This way an operator can 
-             select all external peers, all internal 
-             peers, or all peers.";
-        }
-
-
-      }
-
-
-    }
-  }
 
   grouping bmp-tcp-options {
     description 
@@ -530,7 +409,6 @@ module ietf-bmp {
                  peers, or all peers.";
             }
             uses bmp-source-configuration;
-            uses bmp-peer-rib-monitoring;
 
 
           }
@@ -611,7 +489,6 @@ module ietf-bmp {
                 "Address family id to enable for local-rib";
               }
               uses bmp-source-configuration;
-              uses bmp-local-rib-monitoring;
             }
           }
         }
