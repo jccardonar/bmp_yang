@@ -221,16 +221,17 @@ module ietf-bmp {
   grouping bmp-ip-connection {
     description
       "common elements for defining connectivity
-       to a bmp station";
+       to a BMP monitoring station";
     choice passive-or-active {
       description
-        "Choice for active or passive connection";
+        "Choice for active or passive connection as described
+        in section 3.2 of RFC 7854";
       case active {
         description
-          "The device starts the connection to the station";
+          "The device starts the connection to the monitoring station";
         container active {
           description
-            "The device starts the connection to  the station";
+            "The device starts the connection to the monitoring station";
           leaf network-instance {
             type leafref {
               path "/ni:network-instances/ni:network-instance/"
@@ -244,7 +245,7 @@ module ietf-bmp {
             type inet:ip-address;
             mandatory true;
             description
-              "Destination IP address of station";
+              "Destination IP address of monitoring station";
           }
           leaf station-port {
             type inet:port-number;
@@ -516,7 +517,7 @@ module ietf-bmp {
 
   grouping bmp-session-options {
     description
-      "leaves for configuration of the bmp session";
+      "leaves for configuration of the BMP session";
     leaf initiation-message {
       type string;
       description
@@ -533,10 +534,10 @@ module ietf-bmp {
   container bmp {
     description
       "Main level for BMP configuration ";
-    container stations {
+    container monitorin-stations {
       description
         "Container for the list of BMP stations";
-      list station {
+      list monitorin-station {
         key "id";
         description
           "Configuration for BMP stations.";
