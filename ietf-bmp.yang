@@ -117,30 +117,29 @@ module ietf-bmp {
       RFC-EDITOR: please update YYYY with this RFC ID";
   }
 
-  identity bmp-peer-types-idty {
-    description "Enum values for peer selection specific for BMP";
+  identity bmp-peer-types {
+    description 
+    "Enum values for multiple selecting peer's Routing Information Bases (RIB) 
+    for configuration.";
   }
   
-  identity bmp-peer-types-all-peers-idty {
-    base bmp-peer-types-idty;
-    description "This identify is an explicit way 
-      of defining that the device SHOULD send the 
-      updates from all peers to the station for a 
-      particular RIB/AFI."; 
+  identity bmp-peer-types-all-peers {
+    base bmp-peer-types;
+    description 
+    "This identify selects all peer's RIBs. 
+    When used, it act as a 'default' configuration."; 
   }
 
-  identity bmp-ni-types-idty {
-    description "Enum values for network instances 
-      specific for BMP";
+  identity bmp-ni-types {
+    description "Enum values for selecting multiple Network instances
+    for configuration";
   }
   
-  identity bmp-ni-types-all-ni-idty {
-    base bmp-ni-types-idty;
+  identity bmp-ni-types-all-ni {
+    base bmp-ni-types;
     description "The identify is an explicit way 
-      of defining that the device SHOULD send the 
-      updates from all network instances."; 
+      of selecting all network instances."; 
   }
-
 
   grouping bmp-tcp-options {
     description 
@@ -153,7 +152,6 @@ module ietf-bmp {
     // Taken from the bgp yang module
     leaf mtu-discovery {
         type boolean;
-        default "true";
         description
           "Turns path mtu discovery for the  TCP sessions 
           on (true) or off (false).";
@@ -169,7 +167,6 @@ module ietf-bmp {
        description
          "Does this session need to be secured?";
     }
-
 
    container secure-session {
      when "../secure-session-enable = 'true'";
@@ -239,9 +236,9 @@ module ietf-bmp {
               path "/ni:network-instances/ni:network-instance/"
                  + "ni:name";
             }
-            mandatory true;
             description 
-              "Network-instance to used to reach the station.";
+              "If present, specifies the network instance used to reach the
+              monitoring station.";
           }
           leaf station-address {
             type inet:ip-address;
@@ -284,29 +281,31 @@ module ietf-bmp {
               path "/ni:network-instances/ni:network-instance/"
                  + "ni:name";
             }
-            mandatory true;
             description 
-              "Network-instance to use to reach the station.";
+              "If present, specifies the network instance used to reach the
+              monitoring station.";
           }
           leaf station-address {
             type inet:ip-address;
             mandatory true;
             description
-              "address of station";
+              "address of the station";
           }
           leaf station-port {
             type inet:port-number;
             description
-              "Optional port identifying the connection, 
+              "Optional value identifying the origin port of the connection, 
               if provided it MUST match";
           }
           leaf local-address {
             type inet:ip-address;
+            mandatory true;
             description
               "Local IP address to wait for the connection";
           }
           leaf local-port {
             type inet:port-number;
+            mandatory true;
             description
               "Local port to wait for the connection";
           }
@@ -358,6 +357,7 @@ module ietf-bmp {
        origin/destination peers are well defined.";
     leaf enabled {
       type boolean;
+      default false;
       description
         "Enables the specified RIB";
     }
@@ -398,15 +398,15 @@ module ietf-bmp {
                 }
                 type bt:peer-type;
                 type identityref {
-                  base bmp-peer-types-idty;
+                  base bmp-peer-types;
                 }
               }
               description
                 "Peers can be identified by a remote-address,
                  or by an enum value corresponding to groups 
                  of peers.  This way an operator can 
-                 select all external peers, all internal 
-                 peers, or all peers.";
+                 select, for example, all external peers, 
+                 all internal peers, or all peers.";
             }
             uses bmp-source-configuration;
 
@@ -434,18 +434,17 @@ module ietf-bmp {
                  + "ni:name";
             }
             type identityref {
-              base bmp-ni-types-all-ni-idty;
+              base bmp-ni-types;
             }
           }
           description 
             "Identification of a network-instance.
             Network instances can be identified
-            directly by their path or one can define all of 
-            them using an identity";
+            directly by their path or use an identity to 
+            identify a group of them 
+            (e.g. bmp-ni-types-all-ni for all of them)";
             
         }
-
-
 
         container adj-rib-in-pre {
           description
@@ -469,6 +468,7 @@ module ietf-bmp {
             Protocol (BMP), Section 3.";
           leaf enabled {
             type boolean;
+            default false;
             description
               "Enables the specified RIB";
           }
