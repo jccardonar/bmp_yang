@@ -420,6 +420,7 @@ module ietf-bmp {
   grouping bmp-route-monitoring-sources {
     description
       "Route monitoring sources";
+    reference "RFC7854:  BGP Monitoring Protocol, Section 5.";
 
     container network-instances {
       description
@@ -515,44 +516,34 @@ module ietf-bmp {
 
   }
 
-  grouping bmp-session-options {
-    description
-      "leaves for configuration of the BMP session";
-    leaf initiation-message {
-      type string;
-      description
-        "User defined message to append to the
-         initiation message";
-    }
-    leaf statistics-interval {
-      type uint32;
-      description
-        "Default Interval for statistic message.";
-    }
-  }
 
   container bmp {
     description
       "Main level for BMP configuration ";
-    container monitorin-stations {
+    container monitoring-stations {
       description
-        "Container for the list of BMP stations";
-      list monitorin-station {
+        "Container for the list of BMP monitoring stations";
+      list monitoring-station {
         key "id";
         description
-          "Configuration for BMP stations.";
+          "Configuration for a BMP monitoring station.";
         leaf id {
           type string;
           description
-            "Identification string for the station";
+            "Identification string for the monitoring station";
         }
         // Connection, missing tcp tuning params 
         // like keep-alives, segment sizes, etc.
         container connection {
           description
-            "Connection details for the station";
+            "Connection details for the monitoring station";
           uses bmp-ip-connection;
-          uses bmp-tcp-options;
+
+          container tcp-options {
+            description
+             "TCP options for the connection to the monitoring station";
+            uses bmp-tcp-options;
+          }
 
           leaf initial-delay {
             type uint32;
@@ -598,14 +589,29 @@ module ietf-bmp {
           }
         }
 
-        container bmp-session {
+        container bmp-data {
           description
-            "BMP session options for the station";
-          uses bmp-session-options;
-        }
-        container bmp-sources {
-          description
-            "Configuration of the data sources for the station";
+            "Configuration of BMP data";
+
+          leaf initiation-message {
+            type string;
+            description
+              "User defined message to append to the
+               initiation message";
+            reference "RFC7854:  BGP Monitoring Protocol, Section 4.3 and 4.4";
+          }
+
+          container bmp-statistics-report  {
+            description "Configuration of the statistics report";
+            reference "RFC7854:  BGP Monitoring Protocol, Section 4.8";
+            leaf statistics-interval {
+              type uint32;
+              description
+                "Default Interval for statistic message.";
+            }
+
+          }
+
           container bmp-route-monitoring {
             description
               "Configuration of the data sources for 
@@ -613,6 +619,7 @@ module ietf-bmp {
             uses bmp-route-monitoring-sources;
           }
         }
+
         container session-stats {
           description
             "stats and operational values for the station";
@@ -680,36 +687,39 @@ module ietf-bmp {
                successful connection";
           }
         }
-      }
 
-      container actions {
-        nacm:default-deny-all;
-        description
-          "Container with the actions for the BMP operation";
-        action session-reset {
+
+        container actions {
+          nacm:default-deny-all;
           description
-            "Resets the session for a station.";
-          output {
-            choice outcome {
-              description
-                "Output of the reset operation. Either a success or
-                 failure. For the latter, the reason for the 
-                 error is provided.";
-              leaf success {
-                type empty;
+            "Container with the actions for the BMP operation";
+          action session-reset {
+            description
+              "Resets the session for a station.";
+            output {
+              choice outcome {
                 description
-                  "Reset successful";
-              }
-              leaf failure {
-                type string;
-                description
-                  "Reset could not be performed. 
-                  Reason is included in the field";
+                  "Output of the reset operation. Either a success or
+                   failure. For the latter, the reason for the 
+                   error is provided.";
+                leaf success {
+                  type empty;
+                  description
+                    "Reset successful";
+                }
+                leaf failure {
+                  type string;
+                  description
+                    "Reset could not be performed. 
+                    Reason is included in the field";
+                }
               }
             }
           }
         }
+
       }
+
 
 
     }
