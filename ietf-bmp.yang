@@ -126,7 +126,7 @@ module ietf-bmp {
   identity bmp-peer-types-all-peers {
     base bmp-peer-types;
     description 
-    "This identify selects all peer's RIBs. 
+    "This identity selects all peer's RIBs. 
     When used, it act as a 'default' configuration."; 
   }
 
@@ -139,6 +139,11 @@ module ietf-bmp {
     base bmp-ni-types;
     description "The identify is an explicit way 
       of selecting all network instances."; 
+  }
+
+  identity bmp-ni-types-global-ni {
+    base bmp-ni-types;
+    description "Selects the global network instance"; 
   }
 
   grouping bmp-tcp-options {
@@ -321,13 +326,19 @@ module ietf-bmp {
     description
     "Group containing some general characteristics for configuring
     a BMP source";
+
     container filters {
       description 
-      "Contains containers specifying filters for deciding 
+      "Includes containers specifying filters for deciding 
       which routes to export to the station";
       container policy-filter {
           description
-          "Filter routes based on a policy";
+          "Filter routes based on a policy.
+          The policy SHOULD not perform any action besides
+          filtering routes.
+          The policy SHOULD only contain accept and reject 
+          routes, and the matching conditions SHOULD only 
+          match prefix sets.";
           leaf-list export-policy {
            type leafref {
              path "/rt-pol:routing-policy/"
@@ -356,11 +367,13 @@ module ietf-bmp {
     description
       "Leaves for configuring RIBs where
        origin/destination peers are well defined.";
+
     leaf enabled {
       type boolean;
-      default false;
+      default true;
       description
-        "Enables the specified RIB";
+        "Enables route monitoring messages
+        for the specified RIB";
     }
 
     container address-families {
@@ -372,15 +385,36 @@ module ietf-bmp {
           "List of address families.
            The name of the address family, as defined
            in the BGP model is used for keying.";
-        leaf name {
-          type leafref {
-            path "/rt:routing/rt:control-plane-protocols/"
-               + "rt:control-plane-protocol/bgp:bgp/"
-               + "bgp:global/bgp:afi-safis/bgp:afi-safi/bgp:name";
+
+        // If we knew the network instance,
+        // we could list the AF directly from the configured
+        // ones, as we for instance show next for the global one.
+        // leaf name {
+        //   type leafref {
+        //     path "/rt:routing/rt:control-plane-protocols/"
+        //        + "rt:control-plane-protocol/bgp:bgp/"
+        //        + "bgp:global/bgp:afi-safis/bgp:afi-safi/bgp:name";
+        //   }
+        //   description
+        //     "Name of the address family";
+        // }
+        // However, since is not aware if we are doing global, and individual NT or a default, we cannot contraint it to this.
+        leaf address-family-id {
+          type identityref {
+            base bt:afi-safi-type;
           }
           description
-            "Name of the address family";
+          "Address family id to configure";
         }
+
+        leaf enabled {
+          type boolean;
+          default true;
+          description
+            "Enables route monitoring messages 
+            for the address family";
+        }
+
         container peers {
           description
           "Identification of peers 
@@ -392,11 +426,18 @@ module ietf-bmp {
             for which we send BMP data to the collector";
             leaf peer-id {
               type union {
-                type leafref {
-                  path "/rt:routing/rt:control-plane-protocols/"
-                  + "rt:control-plane-protocol/bgp:bgp/"
-                  + "bgp:neighbors/bgp:neighbor/bgp:remote-address";
-                }
+                // inet:ip-address reflects a neighbor
+                // but since the model is not aware of 
+                // the ni, it doesn not know from where to get it
+                // e.g. if we knew were were referencing 
+                //      the global instance, we could do:
+                // type leafref {
+                //   path "/rt:routing/rt:control-plane-protocols/"
+                //   + "rt:control-plane-protocol/bgp:bgp/"
+                //   + "bgp:neighbors/bgp:neighbor/"
+                //   + "bgp:remote-address";
+                // }
+                type inet:ip-address
                 type bt:peer-type;
                 type identityref {
                   base bmp-peer-types;
@@ -404,10 +445,19 @@ module ietf-bmp {
               }
               description
                 "Peers can be identified by a remote-address,
+                 by the bgp type of the peers,
                  or by an enum value corresponding to groups 
                  of peers.  This way an operator can 
                  select, for example, all external peers, 
                  all internal peers, or all peers.";
+            }
+
+            leaf enabled {
+              type boolean;
+              default true;
+              description
+                "Enables routing monitoring messages 
+                for the peer(s).";
             }
             uses bmp-source-configuration;
 
@@ -429,6 +479,7 @@ module ietf-bmp {
         key "network-instance-id";
         description
           "Network instance to monitory using BMP.";
+
         leaf network-instance-id {
           type union {
             type leafref {
@@ -443,9 +494,18 @@ module ietf-bmp {
             "Identification of a network-instance.
             Network instances can be identified
             directly by their path or use an identity to 
-            identify a group of them 
+            identify one or a group of them 
             (e.g. bmp-ni-types-all-ni for all of them)";
             
+        }
+
+
+        leaf enabled {
+          type boolean;
+          default true;
+          description
+            "Enables routing monitoring 
+            messages for the network instance.";
         }
 
         container adj-rib-in-pre {
@@ -470,9 +530,10 @@ module ietf-bmp {
             Protocol (BMP), Section 3.";
           leaf enabled {
             type boolean;
-            default false;
+            default true;
             description
-              "Enables the specified RIB";
+              "Enables route monitoring messages
+              for the local-rib";
           }
           container address-families {
             description
@@ -557,9 +618,11 @@ module ietf-bmp {
             description
               "Configures the backoff strategy after a connection 
               retry";
+            reference "RFC7854 Section 3.2";
             choice backoff-options {
               description
                 "Options for backoff strategies";
+              reference "RFC7854 Section 3.2";
               case simple-exponential {
                 description 
                   "Simple exponential backoff with limits.";
@@ -606,6 +669,7 @@ module ietf-bmp {
             reference "RFC7854:  BGP Monitoring Protocol, Section 4.8";
             leaf statistics-interval {
               type uint32;
+              units "seconds";
               description
                 "Default Interval for statistic message.";
             }
