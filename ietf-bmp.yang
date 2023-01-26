@@ -12,12 +12,13 @@ module ietf-bmp {
     reference
       "RFC 6991: Common YANG Data Types";
   }
-  import ietf-routing {
-    prefix rt;
-    reference
-      "RFC 8349, A YANG Data Model for Routing Management
-       (NMDA Version).";
-  }
+
+  //import ietf-routing {
+  //  prefix rt;
+  //  reference
+  //    "RFC 8349, A YANG Data Model for Routing Management
+  //     (NMDA Version).";
+  //}
 
   import ietf-bgp-types {
     prefix bt;
@@ -27,13 +28,13 @@ module ietf-bmp {
        to I-D.ietf-idr-bgp-model";
   }
 
-  import ietf-bgp {
-    prefix bgp;
-    reference
-      "RFC BBBB: BGP YANG module for Service Provider Network.
-       RFC-EDITOR: please update XXX with the RFC ID assigned 
-       to I-D.ietf-idr-bgp-model";
-  }
+  //import ietf-bgp {
+  //  prefix bgp;
+  //  reference
+  //    "RFC BBBB: BGP YANG module for Service Provider Network.
+  //     RFC-EDITOR: please update XXX with the RFC ID assigned 
+  //     to I-D.ietf-idr-bgp-model";
+  //}
 
   import ietf-netconf-acm {
     prefix nacm;
@@ -380,7 +381,7 @@ module ietf-bmp {
       description
         "container for lists of address-families";
       list address-family {
-        key "name";
+        key "address-family-id";
         description
           "List of address families.
            The name of the address family, as defined
@@ -437,7 +438,7 @@ module ietf-bmp {
                 //   + "bgp:neighbors/bgp:neighbor/"
                 //   + "bgp:remote-address";
                 // }
-                type inet:ip-address
+                type inet:ip-address;
                 type bt:peer-type;
                 type identityref {
                   base bmp-peer-types;
