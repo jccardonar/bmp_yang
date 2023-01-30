@@ -1,5 +1,5 @@
-# Based on the one from https://github.com/netconf-wg/tls-client-server
-# In case your system doesn't have any of these tools:
+# Based on the Makefile from https://github.com/netconf-wg/tls-client-server
+# In case your system doesn't have any of these tools:, install them
 # https://pypi.python.org/pypi/xml2rfc
 # https://github.com/cabo/kramdown-rfc2629
 # https://github.com/Juniper/libslax/tree/master/doc/oxtradoc
