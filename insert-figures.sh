@@ -1,7 +1,5 @@
 #!/bin/bash
 # based on the file from the repo https://github.com/netconf-wg/tls-client-server/
-set -e 
-
 FOLD=rfcfold
 
 # make sure input params are good
